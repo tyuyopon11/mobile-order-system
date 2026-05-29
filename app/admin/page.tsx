@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Item = {
   id: string;
@@ -40,14 +40,44 @@ export default function AdminPage() {
     "today" | "unprocessed" | "processed" | "all"
   >("today");
 
-  const loadOrders = async () => {
+  const [showNewOrderAlert, setShowNewOrderAlert] = useState(false);
+  const [newOrderCount, setNewOrderCount] = useState(0);
+
+  const initializedRef = useRef(false);
+  const previousOrderIdsRef = useRef<string[]>([]);
+
+  const loadOrders = async (showAlert = false) => {
     const res = await fetch("/api/admin/orders", { cache: "no-store" });
     const data = await res.json();
-    setOrders(data.orders || []);
+    const newOrders: Order[] = data.orders || [];
+
+    const newIds = newOrders.map((order) => order.id);
+
+    if (showAlert && initializedRef.current) {
+      const previousIds = previousOrderIdsRef.current;
+      const addedOrders = newOrders.filter(
+        (order) => !previousIds.includes(order.id)
+      );
+
+      if (addedOrders.length > 0) {
+        setNewOrderCount(addedOrders.length);
+        setShowNewOrderAlert(true);
+      }
+    }
+
+    previousOrderIdsRef.current = newIds;
+    initializedRef.current = true;
+    setOrders(newOrders);
   };
 
   useEffect(() => {
-    loadOrders();
+    loadOrders(false);
+
+    const timer = setInterval(() => {
+      loadOrders(true);
+    }, 10000);
+
+    return () => clearInterval(timer);
   }, []);
 
   const today = new Date().toISOString().slice(0, 10);
@@ -107,14 +137,14 @@ export default function AdminPage() {
       prev.map((order) =>
         order.id === id
           ? {
-             ...order,
-             processed,
+              ...order,
+              processed,
             }
           : order
       )
     );
 
-    await loadOrders();
+    await loadOrders(false);
   };
 
   return (
@@ -169,7 +199,7 @@ export default function AdminPage() {
           </div>
 
           <button
-            onClick={loadOrders}
+            onClick={() => loadOrders(false)}
             className="w-full rounded-xl bg-green-100 p-3 font-black text-green-900"
           >
             再読み込み
@@ -185,16 +215,13 @@ export default function AdminPage() {
 
           {filteredOrders.map((order) => {
             const itemCount = (order.items || []).length;
-            const totalQty = (order.items || []).reduce(
-              (sum, item) => {
-                const qty = parseFloat(
-                  String(item.case_qty || "0").replace(/[^\d.-]/g, "")
-                );
+            const totalQty = (order.items || []).reduce((sum, item) => {
+              const qty = parseFloat(
+                String(item.case_qty || "0").replace(/[^\d.-]/g, "")
+              );
 
-                return sum + (isNaN(qty) ? 0 : qty);
-              },
-              0
-            );
+              return sum + (isNaN(qty) ? 0 : qty);
+            }, 0);
             const isOpen = expandedOrders.includes(order.id);
 
             return (
@@ -240,12 +267,10 @@ export default function AdminPage() {
                     className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white p-4 font-black text-green-900"
                   >
                     <div className="flex flex-col items-start">
-                      <span>
-                        商品明細（{itemCount}件）
-                      </span>
+                      <span>商品明細（{itemCount}件）</span>
 
                       <span className="text-sm text-green-700">
-                       合計数量：{totalQty}
+                        合計数量：{totalQty}
                       </span>
                     </div>
                     <span>{isOpen ? "▼ 閉じる" : "▶ 表示"}</span>
@@ -329,16 +354,52 @@ export default function AdminPage() {
         </section>
       </div>
 
+      {showNewOrderAlert && (
+        <div className="fixed right-4 top-4 z-[9999] w-[calc(100%-2rem)] max-w-sm">
+          <div className="rounded-2xl border-2 border-green-200 bg-white p-5 shadow-2xl">
+            <p className="text-xl font-black text-green-900">
+              📦 新規注文が入りました！
+            </p>
+
+            <p className="mt-2 font-bold text-gray-700">
+              {newOrderCount}件の新しい注文があります。
+            </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={async () => {
+                  setShowNewOrderAlert(false);
+                  setFilter("today");
+                  await loadOrders(false);
+                }}
+                className="rounded-xl bg-green-700 p-3 font-black text-white"
+              >
+                確認する
+              </button>
+
+              <button
+                onClick={() => setShowNewOrderAlert(false)}
+                className="rounded-xl bg-gray-200 p-3 font-black text-gray-800"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <h2 className="text-2xl font-black text-green-900">
-              確認
-            </h2>
+            <h2 className="text-2xl font-black text-green-900">確認</h2>
 
             <p className="font-bold text-gray-800">
               この注文を
-              <span className={confirmTarget.processed ? "text-green-700" : "text-red-700"}>
+              <span
+                className={
+                  confirmTarget.processed ? "text-green-700" : "text-red-700"
+                }
+              >
                 {confirmTarget.processed ? " 処理済み " : " 未処理 "}
               </span>
               に変更しますか？

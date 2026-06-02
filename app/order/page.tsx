@@ -112,7 +112,7 @@ export default function OrderPage() {
     }
 
     setShowConfirm(false);
-    setMessage("注文を送信しました！");
+    setMessage("注文を送信しました！注文履歴から内容を確認できます。");
 
     setBuyerNo("");
     setBuyerBranchNo("");
@@ -132,6 +132,13 @@ export default function OrderPage() {
             <br />
             発注アプリ
           </h1>
+
+          <a
+            href="/order/history"
+            className="mt-4 block rounded-2xl bg-green-100 p-4 text-center text-lg font-black text-green-900"
+          >
+            注文履歴を確認する
+          </a>
         </header>
 
         <section className="rounded-2xl bg-white p-5 shadow space-y-4">
@@ -179,7 +186,10 @@ export default function OrderPage() {
         </section>
 
         {items.map((item, index) => (
-          <section key={index} className="rounded-2xl bg-white p-5 shadow space-y-4">
+          <section
+            key={index}
+            className="rounded-2xl bg-white p-5 shadow space-y-4"
+          >
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black text-green-900">
                 商品 {index + 1}
@@ -237,6 +247,13 @@ export default function OrderPage() {
         >
           注文内容を確認
         </button>
+
+        <a
+          href="/order/history"
+          className="block w-full rounded-2xl bg-white p-4 text-center text-lg font-black text-green-800 shadow"
+        >
+          送信済みの注文を確認する
+        </a>
 
         {message && (
           <p className="rounded-2xl bg-white p-4 text-center text-lg font-bold text-green-800 shadow">

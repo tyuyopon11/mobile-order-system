@@ -86,8 +86,6 @@ export async function GET(
 
       ws.getCell(`G${row}`).value = item.case_qty ?? "";
       ws.getCell(`N${row}`).value = item.case_qty ?? "";
-
-      // システム取込用数量
       ws.getCell(`HF${row}`).value = item.case_qty ?? "";
 
       ws.getCell(`HI${row}`).value = item.note || "";
@@ -100,6 +98,15 @@ export async function GET(
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
+
+    // Excel出力したら自動で処理済みにする
+    await supabase
+      .from("mobile_orders")
+      .update({
+        processed: true,
+        processed_at: new Date().toISOString(),
+      })
+      .eq("id", id);
 
     return new NextResponse(buffer, {
       status: 200,

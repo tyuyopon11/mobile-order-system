@@ -65,8 +65,14 @@ export async function GET(
 
     ws.getCell("A6").value = order.buyer_name || "";
     ws.getCell("HO6").value = order.inputter_name || "";
-    ws.getCell("A7").value = order.contact_phone || "";
-    ws.getCell("HO7").value = order.delivery_date || "";
+
+    // 連絡先は出力しない
+    ws.getCell("A7").value = "";
+
+    // 納品希望日を YYYY/MM/DD 形式で出力
+    ws.getCell("HO7").value = order.delivery_date
+      ? String(order.delivery_date).replaceAll("-", "/")
+      : "";
 
     const startRow = 11;
 
@@ -77,8 +83,13 @@ export async function GET(
       ws.getCell(`F${row}`).value = item.product_name || "";
       ws.getCell(`H${row}`).value = item.spec || "";
       ws.getCell(`I${row}`).value = item.irisu ?? "";
+
       ws.getCell(`G${row}`).value = item.case_qty ?? "";
       ws.getCell(`N${row}`).value = item.case_qty ?? "";
+
+      // システム取込用数量
+      ws.getCell(`HF${row}`).value = item.case_qty ?? "";
+
       ws.getCell(`HI${row}`).value = item.note || "";
       ws.getCell(`HO${row}`).value = order.buyer_no || "";
       ws.getCell(`HP${row}`).value = order.buyer_branch_no || "";

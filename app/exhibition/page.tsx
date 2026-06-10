@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import ConfirmSecureButton from "./confirm-secure-button";
 
 type SearchParams = {
   buyer_no?: string;
@@ -16,7 +17,6 @@ export default async function ExhibitionBuyerPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-
   const supabase = await createClient();
 
   const buyerNo = params.buyer_no || "";
@@ -80,9 +80,7 @@ export default async function ExhibitionBuyerPage({
 
             <form className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-bold">
-                  買参番号
-                </label>
+                <label className="mb-1 block text-sm font-bold">買参番号</label>
                 <input
                   name="buyer_no"
                   defaultValue={buyerNo}
@@ -226,13 +224,9 @@ export default async function ExhibitionBuyerPage({
                     )}
 
                     <div className="space-y-3 p-4">
-                      <p className="text-sm text-gray-500">
-                        No.{item.item_no}
-                      </p>
+                      <p className="text-sm text-gray-500">No.{item.item_no}</p>
 
-                      <h2 className="text-xl font-bold">
-                        {item.product_name}
-                      </h2>
+                      <h2 className="text-xl font-bold">{item.product_name}</h2>
 
                       <div className="space-y-1 text-sm text-gray-700">
                         <p>規格：{item.spec || "-"}</p>
@@ -263,12 +257,10 @@ export default async function ExhibitionBuyerPage({
                         <input type="hidden" name="contact" value={contact} />
                         <input type="hidden" name="password" value={password} />
 
-                        <button
-                          type="submit"
-                          className="w-full rounded-lg bg-green-700 px-4 py-4 text-lg font-bold text-white"
-                        >
-                          商品を確保する
-                        </button>
+                        <ConfirmSecureButton
+                          productName={item.product_name}
+                          price={Number(item.price ?? 0)}
+                        />
                       </form>
                     </div>
                   </div>

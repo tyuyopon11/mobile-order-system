@@ -69,18 +69,22 @@ export default async function ExhibitionItemDetailPage({
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <Link
-          href="/admin/exhibition"
-          className="inline-block rounded border px-4 py-2 text-sm"
-        >
-          ← 一覧へ戻る
-        </Link>
-      </div>
+      <Link
+        href="/admin/exhibition"
+        className="inline-block rounded border px-4 py-2 text-sm"
+      >
+        ← 一覧へ戻る
+      </Link>
 
       {query.success === "status" && (
         <div className="rounded-lg bg-green-50 p-4 font-bold text-green-700">
           状態を変更しました。
+        </div>
+      )}
+
+      {query.success === "image-delete" && (
+        <div className="rounded-lg bg-green-50 p-4 font-bold text-green-700">
+          写真を削除しました。
         </div>
       )}
 
@@ -156,10 +160,7 @@ export default async function ExhibitionItemDetailPage({
             <h3 className="mb-2 font-bold">履歴</h3>
             <div className="space-y-2">
               {orderList.map((order: any) => (
-                <div
-                  key={order.id}
-                  className="rounded border bg-white p-3 text-sm"
-                >
+                <div key={order.id} className="rounded border bg-white p-3 text-sm">
                   <p>
                     <strong>{order.status}</strong> / {order.buyer_no}-{order.branch} /{" "}
                     {order.buyer_name} / {order.contact}
@@ -182,30 +183,21 @@ export default async function ExhibitionItemDetailPage({
         <div className="flex flex-wrap gap-3">
           <form action={`/api/admin/exhibition/items/${item.id}/status`} method="POST">
             <input type="hidden" name="status" value="selling" />
-            <button
-              type="submit"
-              className="rounded-lg bg-green-700 px-5 py-3 font-bold text-white"
-            >
+            <button type="submit" className="rounded-lg bg-green-700 px-5 py-3 font-bold text-white">
               販売中に戻す
             </button>
           </form>
 
           <form action={`/api/admin/exhibition/items/${item.id}/status`} method="POST">
             <input type="hidden" name="status" value="sold" />
-            <button
-              type="submit"
-              className="rounded-lg bg-red-700 px-5 py-3 font-bold text-white"
-            >
+            <button type="submit" className="rounded-lg bg-red-700 px-5 py-3 font-bold text-white">
               売約済にする
             </button>
           </form>
 
           <form action={`/api/admin/exhibition/items/${item.id}/status`} method="POST">
             <input type="hidden" name="status" value="preparing" />
-            <button
-              type="submit"
-              className="rounded-lg bg-yellow-500 px-5 py-3 font-bold text-white"
-            >
+            <button type="submit" className="rounded-lg bg-yellow-500 px-5 py-3 font-bold text-white">
               準備中に戻す
             </button>
           </form>
@@ -225,7 +217,7 @@ export default async function ExhibitionItemDetailPage({
         {imageList.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {imageList.map((image, index) => (
-              <div key={image.id} className="space-y-2">
+              <div key={image.id} className="space-y-2 rounded-lg border bg-gray-50 p-2">
                 <div className="overflow-hidden rounded-lg border bg-gray-100">
                   <img
                     src={image.image_url}
@@ -233,9 +225,23 @@ export default async function ExhibitionItemDetailPage({
                     className="h-40 w-full object-cover"
                   />
                 </div>
+
                 <p className="text-center text-xs text-gray-500">
                   画像 {index + 1}
                 </p>
+
+                <form
+                  action={`/api/admin/exhibition/images/${image.id}`}
+                  method="POST"
+                >
+                  <input type="hidden" name="item_id" value={item.id} />
+                  <button
+                    type="submit"
+                    className="w-full rounded bg-red-600 px-3 py-2 text-sm font-bold text-white"
+                  >
+                    削除
+                  </button>
+                </form>
               </div>
             ))}
           </div>

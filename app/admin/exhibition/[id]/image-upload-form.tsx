@@ -27,10 +27,13 @@ export default function ImageUploadForm({ itemId }: Props) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`/api/admin/exhibition/items/${itemId}/images`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `/api/admin/exhibition/items/${itemId}/images`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const result = await response.json();
 
@@ -38,8 +41,9 @@ export default function ImageUploadForm({ itemId }: Props) {
         throw new Error(result.error);
       }
 
-      setMessage("写真を登録しました。");
+      setMessage("✅ 写真を登録しました。");
       setFile(null);
+
       router.refresh();
     } catch (error) {
       setMessage(
@@ -53,22 +57,36 @@ export default function ImageUploadForm({ itemId }: Props) {
   }
 
   return (
-    <div className="mt-6 rounded border bg-gray-50 p-4">
-      <h3 className="font-bold">写真アップロード</h3>
+    <div className="mt-6 rounded-lg border bg-gray-50 p-4">
+      <h3 className="mb-3 text-lg font-bold">
+        📷 写真登録
+      </h3>
 
       <input
         type="file"
         accept="image/*"
-        className="mt-3 block w-full"
+        capture="environment"
+        className="block w-full rounded border bg-white p-2"
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
+
+      {file && (
+        <div className="mt-3 rounded border bg-white p-3 text-sm">
+          選択中：
+          <span className="font-bold ml-1">
+            {file.name}
+          </span>
+        </div>
+      )}
 
       <button
         onClick={handleUpload}
         disabled={loading}
-        className="mt-4 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:bg-gray-400"
+        className="mt-4 w-full rounded-lg bg-green-600 px-4 py-3 text-lg font-bold text-white hover:bg-green-700 disabled:bg-gray-400"
       >
-        {loading ? "アップロード中..." : "写真をアップロード"}
+        {loading
+          ? "アップロード中..."
+          : "📷 写真を撮影して登録"}
       </button>
 
       {message && (

@@ -12,7 +12,28 @@ export async function POST(request: Request, { params }: Props) {
   const supabase = await createClient();
 
   const formData = await request.formData();
+  const action = formData.get("action")?.toString();
   const status = formData.get("status")?.toString();
+  const inputCompleted = formData.get("input_completed")?.toString();
+
+  if (action === "input_completed") {
+    const completed = inputCompleted === "true";
+
+    const { error } = await supabase
+      .from("exhibition_items")
+      .update({ input_completed: completed })
+      .eq("id", Number(id));
+
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/admin/exhibition/${id}?error=input_completed`, request.url)
+      );
+    }
+
+    return NextResponse.redirect(
+      new URL(`/admin/exhibition/${id}?success=input_completed`, request.url)
+    );
+  }
 
   if (!status || !["preparing", "selling", "sold"].includes(status)) {
     return NextResponse.redirect(
@@ -20,9 +41,20 @@ export async function POST(request: Request, { params }: Props) {
     );
   }
 
+  const updateData: {
+    status: string;
+    input_completed?: boolean;
+  } = {
+    status,
+  };
+
+  if (status === "selling" || status === "preparing") {
+    updateData.input_completed = false;
+  }
+
   const { error } = await supabase
     .from("exhibition_items")
-    .update({ status })
+    .update(updateData)
     .eq("id", Number(id));
 
   if (error) {

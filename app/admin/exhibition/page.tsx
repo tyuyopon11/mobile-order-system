@@ -50,6 +50,7 @@ export default async function ExhibitionAdminPage({
       producer,
       staff,
       status,
+      input_completed,
       exhibition_images (
         id,
         image_url,
@@ -88,6 +89,8 @@ export default async function ExhibitionAdminPage({
     preparing: allItems.filter((item) => item.status === "preparing").length,
     selling: allItems.filter((item) => item.status === "selling").length,
     sold: allItems.filter((item) => item.status === "sold").length,
+    inputCompleted: allItems.filter((item) => item.input_completed === true)
+      .length,
     noPhoto: allItems.filter((item) => (item.exhibition_images ?? []).length === 0)
       .length,
   };
@@ -131,7 +134,7 @@ export default async function ExhibitionAdminPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <div className="rounded-lg border bg-white p-4">
           <p className="text-sm text-gray-500">商品数</p>
           <p className="text-2xl font-bold">{counts.total}</p>
@@ -152,6 +155,13 @@ export default async function ExhibitionAdminPage({
         <div className="rounded-lg border border-red-300 bg-red-50 p-4">
           <p className="text-sm text-red-800 font-bold">売約済</p>
           <p className="text-2xl font-bold text-red-900">{counts.sold}</p>
+        </div>
+
+        <div className="rounded-lg border border-blue-300 bg-blue-50 p-4">
+          <p className="text-sm text-blue-800 font-bold">入力済</p>
+          <p className="text-2xl font-bold text-blue-900">
+            {counts.inputCompleted}
+          </p>
         </div>
 
         <div className="rounded-lg border bg-white p-4">
@@ -204,17 +214,11 @@ export default async function ExhibitionAdminPage({
             未撮影のみ
           </label>
 
-          <button
-            type="submit"
-            className="bg-black text-white rounded px-4 py-2"
-          >
+          <button type="submit" className="bg-black text-white rounded px-4 py-2">
             絞り込み
           </button>
 
-          <Link
-            href="/admin/exhibition"
-            className="border rounded px-4 py-2 text-sm"
-          >
+          <Link href="/admin/exhibition" className="border rounded px-4 py-2 text-sm">
             リセット
           </Link>
         </form>
@@ -288,6 +292,7 @@ export default async function ExhibitionAdminPage({
               <th className="p-2 text-left">生産者</th>
               <th className="p-2 text-left">担当</th>
               <th className="p-2 text-left">状態</th>
+              <th className="p-2 text-left">入力</th>
             </tr>
           </thead>
 
@@ -359,13 +364,27 @@ export default async function ExhibitionAdminPage({
                       {statusLabel[item.status] ?? item.status}
                     </span>
                   </td>
+
+                  <td className="p-2">
+                    {item.input_completed ? (
+                      <span className="rounded-full border border-blue-300 bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                        入力済
+                      </span>
+                    ) : item.status === "sold" ? (
+                      <span className="rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                        未入力
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">-</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
 
             {filteredItems.length === 0 && (
               <tr>
-                <td colSpan={11} className="p-6 text-center text-gray-500">
+                <td colSpan={12} className="p-6 text-center text-gray-500">
                   該当する商品がありません。
                 </td>
               </tr>

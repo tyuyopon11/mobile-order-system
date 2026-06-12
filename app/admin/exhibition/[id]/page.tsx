@@ -28,7 +28,6 @@ export default async function ExhibitionItemDetailPage({
 }: Props) {
   const { id } = await params;
   const query = searchParams ? await searchParams : {};
-
   const supabase = await createClient();
 
   const { data: item, error: itemError } = await supabase
@@ -41,10 +40,7 @@ export default async function ExhibitionItemDetailPage({
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold">商品が見つかりません</h1>
-        <Link
-          href="/admin/exhibition"
-          className="mt-4 inline-block rounded border px-4 py-2"
-        >
+        <Link href="/admin/exhibition" className="mt-4 inline-block rounded border px-4 py-2">
           一覧へ戻る
         </Link>
       </div>
@@ -66,19 +62,23 @@ export default async function ExhibitionItemDetailPage({
   const imageList = images ?? [];
   const orderList = orders ?? [];
   const securedOrder = orderList.find((order: any) => order.status === "secured");
+  const inputCompleted = item.input_completed === true;
 
   return (
     <div className="p-6 space-y-6">
-      <Link
-        href="/admin/exhibition"
-        className="inline-block rounded border px-4 py-2 text-sm"
-      >
+      <Link href="/admin/exhibition" className="inline-block rounded border px-4 py-2 text-sm">
         ← 一覧へ戻る
       </Link>
 
       {query.success === "status" && (
         <div className="rounded-lg bg-green-50 p-4 font-bold text-green-700">
           状態を変更しました。
+        </div>
+      )}
+
+      {query.success === "input_completed" && (
+        <div className="rounded-lg bg-blue-50 p-4 font-bold text-blue-700">
+          入力済み状態を変更しました。
         </div>
       )}
 
@@ -105,14 +105,21 @@ export default async function ExhibitionItemDetailPage({
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold">商品情報</h2>
 
-          <span
-            className={`rounded-full border px-4 py-2 text-sm font-bold ${
-              statusStyle[item.status] ??
-              "bg-gray-100 text-gray-700 border-gray-300"
-            }`}
-          >
-            {statusLabel[item.status] ?? item.status}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span
+              className={`rounded-full border px-4 py-2 text-sm font-bold ${
+                statusStyle[item.status] ?? "bg-gray-100 text-gray-700 border-gray-300"
+              }`}
+            >
+              {statusLabel[item.status] ?? item.status}
+            </span>
+
+            {inputCompleted && (
+              <span className="rounded-full border border-blue-300 bg-blue-100 px-4 py-2 text-sm font-bold text-blue-800">
+                入力済
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
@@ -134,18 +141,50 @@ export default async function ExhibitionItemDetailPage({
         <h2 className="mb-4 text-xl font-bold">確保状況</h2>
 
         {securedOrder ? (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4">
-            <p className="mb-2 font-bold text-red-800">この商品は確保済みです</p>
-            <div className="space-y-1 text-sm">
-              <p><strong>買参番号：</strong>{securedOrder.buyer_no}-{securedOrder.branch}</p>
-              <p><strong>店名：</strong>{securedOrder.buyer_name}</p>
-              <p><strong>連絡先：</strong>{securedOrder.contact}</p>
-              <p><strong>数量：</strong>{securedOrder.quantity ?? 1}</p>
-              {securedOrder.created_at && (
-                <p>
-                  <strong>確保日時：</strong>
-                  {new Date(securedOrder.created_at).toLocaleString("ja-JP")}
-                </p>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-red-300 bg-red-50 p-4">
+              <p className="mb-2 font-bold text-red-800">この商品は確保済みです</p>
+              <div className="space-y-1 text-sm">
+                <p><strong>買参番号：</strong>{securedOrder.buyer_no}-{securedOrder.branch}</p>
+                <p><strong>店名：</strong>{securedOrder.buyer_name}</p>
+                <p><strong>連絡先：</strong>{securedOrder.contact}</p>
+                <p><strong>数量：</strong>{securedOrder.quantity ?? 1}</p>
+                {securedOrder.created_at && (
+                  <p>
+                    <strong>確保日時：</strong>
+                    {new Date(securedOrder.created_at).toLocaleString("ja-JP")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-blue-300 bg-blue-50 p-4">
+              <p className="mb-3 font-bold text-blue-800">営業入力状況</p>
+
+              {inputCompleted ? (
+                <div className="space-y-3">
+                  <p className="font-bold text-blue-700">入力済みです。</p>
+                  <form action={`/api/admin/exhibition/items/${item.id}/status`} method="POST">
+                    <input type="hidden" name="action" value="input_completed" />
+                    <input type="hidden" name="input_completed" value="false" />
+                    <button type="submit" className="rounded-lg bg-gray-700 px-5 py-3 font-bold text-white">
+                      入力済みを解除
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    AS・売立入力が終わったら押してください。
+                  </p>
+                  <form action={`/api/admin/exhibition/items/${item.id}/status`} method="POST">
+                    <input type="hidden" name="action" value="input_completed" />
+                    <input type="hidden" name="input_completed" value="true" />
+                    <button type="submit" className="rounded-lg bg-blue-700 px-5 py-3 font-bold text-white">
+                      入力済みにする
+                    </button>
+                  </form>
+                </div>
               )}
             </div>
           </div>
@@ -204,7 +243,7 @@ export default async function ExhibitionItemDetailPage({
         </div>
 
         <p className="mt-3 text-sm text-gray-500">
-          売約取消したい場合は「販売中に戻す」を押してください。
+          売約取消したい場合は「販売中に戻す」を押してください。販売中・準備中へ戻すと入力済みも解除されます。
         </p>
       </div>
 
@@ -230,15 +269,9 @@ export default async function ExhibitionItemDetailPage({
                   画像 {index + 1}
                 </p>
 
-                <form
-                  action={`/api/admin/exhibition/images/${image.id}`}
-                  method="POST"
-                >
+                <form action={`/api/admin/exhibition/images/${image.id}`} method="POST">
                   <input type="hidden" name="item_id" value={item.id} />
-                  <button
-                    type="submit"
-                    className="w-full rounded bg-red-600 px-3 py-2 text-sm font-bold text-white"
-                  >
+                  <button type="submit" className="w-full rounded bg-red-600 px-3 py-2 text-sm font-bold text-white">
                     削除
                   </button>
                 </form>

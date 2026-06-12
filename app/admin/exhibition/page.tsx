@@ -89,10 +89,8 @@ export default async function ExhibitionAdminPage({
     preparing: allItems.filter((item) => item.status === "preparing").length,
     selling: allItems.filter((item) => item.status === "selling").length,
     sold: allItems.filter((item) => item.status === "sold").length,
-    inputCompleted: allItems.filter((item) => item.input_completed === true)
-      .length,
-    noPhoto: allItems.filter((item) => (item.exhibition_images ?? []).length === 0)
-      .length,
+    inputCompleted: allItems.filter((item) => item.input_completed === true).length,
+    noPhoto: allItems.filter((item) => (item.exhibition_images ?? []).length === 0).length,
   };
 
   const buildUrl = (urlParams: Record<string, string>) => {
@@ -118,6 +116,13 @@ export default async function ExhibitionAdminPage({
 
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/admin/exhibition/orders"
+            className="rounded-lg bg-purple-700 px-4 py-2 font-bold text-white"
+          >
+            売約一覧
+          </Link>
+
+          <Link
             href="/admin/exhibition/import"
             className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white"
           >
@@ -142,9 +147,7 @@ export default async function ExhibitionAdminPage({
 
         <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4">
           <p className="text-sm text-yellow-800 font-bold">準備中</p>
-          <p className="text-2xl font-bold text-yellow-900">
-            {counts.preparing}
-          </p>
+          <p className="text-2xl font-bold text-yellow-900">{counts.preparing}</p>
         </div>
 
         <div className="rounded-lg border border-green-300 bg-green-50 p-4">
@@ -159,9 +162,7 @@ export default async function ExhibitionAdminPage({
 
         <div className="rounded-lg border border-blue-300 bg-blue-50 p-4">
           <p className="text-sm text-blue-800 font-bold">入力済</p>
-          <p className="text-2xl font-bold text-blue-900">
-            {counts.inputCompleted}
-          </p>
+          <p className="text-2xl font-bold text-blue-900">{counts.inputCompleted}</p>
         </div>
 
         <div className="rounded-lg border bg-white p-4">
@@ -176,11 +177,7 @@ export default async function ExhibitionAdminPage({
         <form className="flex flex-wrap gap-3 items-end">
           <div>
             <label className="block text-sm text-gray-600 mb-1">担当者</label>
-            <select
-              name="staff"
-              defaultValue={selectedStaff}
-              className="border rounded px-3 py-2"
-            >
+            <select name="staff" defaultValue={selectedStaff} className="border rounded px-3 py-2">
               <option value="">全員</option>
               {staffList.map((staff) => (
                 <option key={staff} value={staff}>
@@ -192,11 +189,7 @@ export default async function ExhibitionAdminPage({
 
           <div>
             <label className="block text-sm text-gray-600 mb-1">状態</label>
-            <select
-              name="status"
-              defaultValue={selectedStatus}
-              className="border rounded px-3 py-2"
-            >
+            <select name="status" defaultValue={selectedStatus} className="border rounded px-3 py-2">
               <option value="">すべて</option>
               <option value="preparing">準備中</option>
               <option value="selling">販売中</option>
@@ -205,12 +198,7 @@ export default async function ExhibitionAdminPage({
           </div>
 
           <label className="flex items-center gap-2 border rounded px-3 py-2">
-            <input
-              type="checkbox"
-              name="noPhoto"
-              value="1"
-              defaultChecked={noPhotoOnly}
-            />
+            <input type="checkbox" name="noPhoto" value="1" defaultChecked={noPhotoOnly} />
             未撮影のみ
           </label>
 
@@ -224,54 +212,23 @@ export default async function ExhibitionAdminPage({
         </form>
 
         <div className="flex flex-wrap gap-2 text-sm">
-          <Link
-            href={buildUrl({ staff: selectedStaff, status: "", noPhoto: "" })}
-            className="border rounded px-3 py-1"
-          >
+          <Link href={buildUrl({ staff: selectedStaff, status: "", noPhoto: "" })} className="border rounded px-3 py-1">
             全件
           </Link>
 
-          <Link
-            href={buildUrl({
-              staff: selectedStaff,
-              status: "preparing",
-              noPhoto: "",
-            })}
-            className="border border-yellow-300 bg-yellow-50 text-yellow-800 rounded px-3 py-1 font-bold"
-          >
+          <Link href={buildUrl({ staff: selectedStaff, status: "preparing", noPhoto: "" })} className="border border-yellow-300 bg-yellow-50 text-yellow-800 rounded px-3 py-1 font-bold">
             準備中
           </Link>
 
-          <Link
-            href={buildUrl({
-              staff: selectedStaff,
-              status: "selling",
-              noPhoto: "",
-            })}
-            className="border border-green-300 bg-green-50 text-green-800 rounded px-3 py-1 font-bold"
-          >
+          <Link href={buildUrl({ staff: selectedStaff, status: "selling", noPhoto: "" })} className="border border-green-300 bg-green-50 text-green-800 rounded px-3 py-1 font-bold">
             販売中
           </Link>
 
-          <Link
-            href={buildUrl({
-              staff: selectedStaff,
-              status: "sold",
-              noPhoto: "",
-            })}
-            className="border border-red-300 bg-red-50 text-red-800 rounded px-3 py-1 font-bold"
-          >
+          <Link href={buildUrl({ staff: selectedStaff, status: "sold", noPhoto: "" })} className="border border-red-300 bg-red-50 text-red-800 rounded px-3 py-1 font-bold">
             売約済
           </Link>
 
-          <Link
-            href={buildUrl({
-              staff: selectedStaff,
-              status: selectedStatus,
-              noPhoto: "1",
-            })}
-            className="border rounded px-3 py-1"
-          >
+          <Link href={buildUrl({ staff: selectedStaff, status: selectedStatus, noPhoto: "1" })} className="border rounded px-3 py-1">
             未撮影
           </Link>
         </div>
@@ -323,11 +280,7 @@ export default async function ExhibitionAdminPage({
                   </td>
 
                   <td className="p-2">
-                    <span
-                      className={`rounded-full border px-3 py-1 text-xs font-bold ${photoCountStyle(
-                        photoCount
-                      )}`}
-                    >
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${photoCountStyle(photoCount)}`}>
                       {displayPhotoCount}/3
                     </span>
                   </td>
@@ -335,32 +288,22 @@ export default async function ExhibitionAdminPage({
                   <td className="p-2">{item.item_no}</td>
 
                   <td className="p-2 font-medium">
-                    <Link
-                      href={`/admin/exhibition/${item.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    <Link href={`/admin/exhibition/${item.id}`} className="text-blue-600 hover:underline">
                       {item.product_name}
                     </Link>
                   </td>
 
                   <td className="p-2">{item.spec}</td>
                   <td className="p-2 text-right">{item.quantity}</td>
-
-                  <td className="p-2 text-right">
-                    {item.price?.toLocaleString()}円
-                  </td>
-
+                  <td className="p-2 text-right">{item.price?.toLocaleString()}円</td>
                   <td className="p-2">{item.origin}</td>
                   <td className="p-2">{item.producer}</td>
                   <td className="p-2">{item.staff}</td>
 
                   <td className="p-2">
-                    <span
-                      className={`rounded-full border px-3 py-1 text-xs font-bold ${
-                        statusStyle[item.status] ??
-                        "bg-gray-100 text-gray-700 border-gray-300"
-                      }`}
-                    >
+                    <span className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                      statusStyle[item.status] ?? "bg-gray-100 text-gray-700 border-gray-300"
+                    }`}>
                       {statusLabel[item.status] ?? item.status}
                     </span>
                   </td>

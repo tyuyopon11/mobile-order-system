@@ -41,20 +41,11 @@ export async function POST(request: Request, { params }: Props) {
     );
   }
 
-  const updateData: {
-    status: string;
-    input_completed?: boolean;
-  } = {
-    status,
-  };
-
-  if (status === "selling" || status === "preparing") {
-    updateData.input_completed = false;
-  }
-
   const { error } = await supabase
     .from("exhibition_items")
-    .update(updateData)
+    .update({
+      status,
+    })
     .eq("id", Number(id));
 
   if (error) {

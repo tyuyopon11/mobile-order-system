@@ -9,6 +9,7 @@ type SearchParams = {
   password?: string;
   success?: string;
   error?: string;
+  page?: string;
 };
 
 export default async function ExhibitionBuyerPage({
@@ -25,6 +26,11 @@ export default async function ExhibitionBuyerPage({
   const contact = params.contact || "";
   const password = params.password || "";
 
+  const currentPage = Math.max(Number(params.page || "1"), 1);
+  const pageSize = 20;
+  const from = (currentPage - 1) * pageSize;
+  const to = from + pageSize - 1;
+
   const isInputComplete =
     buyerNo && branch && buyerName && contact && password;
 
@@ -39,10 +45,11 @@ export default async function ExhibitionBuyerPage({
     isInputComplete &&
     exhibition.access_password === password;
 
-  const { data: items } = isLoginOk
+  const { data: items, count } = isLoginOk
     ? await supabase
         .from("exhibition_items")
-        .select(`
+        .select(
+          `
           id,
           item_no,
           product_name,
@@ -58,11 +65,30 @@ export default async function ExhibitionBuyerPage({
             image_url,
             sort_order
           )
-        `)
+        `,
+          { count: "exact" }
+        )
         .eq("exhibition_id", exhibition.id)
         .eq("status", "selling")
         .order("item_no", { ascending: true })
-    : { data: [] };
+        .range(from, to)
+    : { data: [], count: 0 };
+
+  const totalCount = count ?? 0;
+  const totalPages = Math.max(Math.ceil(totalCount / pageSize), 1);
+
+  const createPageUrl = (page: number) => {
+    const query = new URLSearchParams();
+
+    query.set("buyer_no", buyerNo);
+    query.set("branch", branch);
+    query.set("buyer_name", buyerName);
+    query.set("contact", contact);
+    query.set("password", password);
+    query.set("page", String(page));
+
+    return `/exhibition?${query.toString()}`;
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 p-4">
@@ -173,6 +199,15 @@ export default async function ExhibitionBuyerPage({
               </div>
             )}
 
+            <div className="rounded-xl bg-white p-4 text-sm text-gray-600 shadow">
+              <p>
+                販売中商品：<span className="font-bold">{totalCount}</span> 件
+              </p>
+              <p>
+                {currentPage} / {totalPages} ページ
+              </p>
+            </div>
+
             <div className="space-y-4">
               {(items ?? []).map((item: any) => {
                 const images = [...(item.exhibition_images ?? [])].sort(
@@ -197,6 +232,8 @@ export default async function ExhibitionBuyerPage({
                                 src={image.image_url}
                                 alt={`${item.product_name} 画像${index + 1}`}
                                 className="h-72 w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                           ))}
@@ -271,6 +308,40 @@ export default async function ExhibitionBuyerPage({
             {(items ?? []).length === 0 && (
               <div className="rounded-xl bg-white p-6 text-center text-gray-500 shadow">
                 現在販売中の商品はありません。
+              </div>
+            )}
+
+            {totalCount > 0 && (
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-white p-4 shadow">
+                {currentPage > 1 ? (
+                  <a
+                    href={createPageUrl(currentPage - 1)}
+                    className="flex-1 rounded-lg bg-gray-200 px-4 py-3 text-center font-bold text-gray-700"
+                  >
+                    前へ
+                  </a>
+                ) : (
+                  <div className="flex-1 rounded-lg bg-gray-100 px-4 py-3 text-center font-bold text-gray-400">
+                    前へ
+                  </div>
+                )}
+
+                <div className="px-2 text-sm font-bold text-gray-600">
+                  {currentPage} / {totalPages}
+                </div>
+
+                {currentPage < totalPages ? (
+                  <a
+                    href={createPageUrl(currentPage + 1)}
+                    className="flex-1 rounded-lg bg-green-700 px-4 py-3 text-center font-bold text-white"
+                  >
+                    次へ
+                  </a>
+                ) : (
+                  <div className="flex-1 rounded-lg bg-gray-100 px-4 py-3 text-center font-bold text-gray-400">
+                    次へ
+                  </div>
+                )}
               </div>
             )}
           </>

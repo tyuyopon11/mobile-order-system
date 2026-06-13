@@ -5,6 +5,7 @@ type SearchParams = {
   staff?: string;
   status?: string;
   noPhoto?: string;
+  page?: string;
 };
 
 const statusLabel: Record<string, string> = {
@@ -37,7 +38,52 @@ export default async function ExhibitionAdminPage({
   const selectedStatus = params.status || "";
   const noPhotoOnly = params.noPhoto === "1";
 
-  const { data: items, error } = await supabase
+  const pageSize = 30;
+  const currentPage = Math.max(Number(params.page || "1"), 1);
+  const from = (currentPage - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: countItems } = await supabase
+    .from("exhibition_items")
+    .select(`
+      id,
+      staff,
+      status,
+      input_completed,
+      exhibition_images (
+        id
+      )
+    `);
+
+  const allCountItems = countItems ?? [];
+
+  const staffList = Array.from(
+    new Set(allCountItems.map((item: any) => item.staff).filter(Boolean))
+  ).sort();
+
+  const counts = {
+    total: allCountItems.length,
+    preparing: allCountItems.filter((item: any) => item.status === "preparing").length,
+    selling: allCountItems.filter((item: any) => item.status === "selling").length,
+    sold: allCountItems.filter((item: any) => item.status === "sold").length,
+    inputCompleted: allCountItems.filter((item: any) => item.input_completed === true).length,
+    noPhoto: allCountItems.filter((item: any) => (item.exhibition_images ?? []).length === 0).length,
+  };
+
+  let filteredCountItems = allCountItems.filter((item: any) => {
+    const images = item.exhibition_images ?? [];
+
+    if (selectedStaff && item.staff !== selectedStaff) return false;
+    if (selectedStatus && item.status !== selectedStatus) return false;
+    if (noPhotoOnly && images.length > 0) return false;
+
+    return true;
+  });
+
+  const totalCount = filteredCountItems.length;
+  const totalPages = Math.max(Math.ceil(totalCount / pageSize), 1);
+
+  let itemQuery = supabase
     .from("exhibition_items")
     .select(`
       id,
@@ -53,11 +99,20 @@ export default async function ExhibitionAdminPage({
       input_completed,
       exhibition_images (
         id,
-        image_url,
         sort_order
       )
     `)
     .order("item_no", { ascending: true });
+
+  if (selectedStaff) {
+    itemQuery = itemQuery.eq("staff", selectedStaff);
+  }
+
+  if (selectedStatus) {
+    itemQuery = itemQuery.eq("status", selectedStatus);
+  }
+
+  const { data: rawItems, error } = await itemQuery;
 
   if (error) {
     return (
@@ -68,30 +123,13 @@ export default async function ExhibitionAdminPage({
     );
   }
 
-  const allItems = items ?? [];
-
-  const staffList = Array.from(
-    new Set(allItems.map((item) => item.staff).filter(Boolean))
-  ).sort();
-
-  const filteredItems = allItems.filter((item) => {
-    const images = item.exhibition_images ?? [];
-
-    if (selectedStaff && item.staff !== selectedStaff) return false;
-    if (selectedStatus && item.status !== selectedStatus) return false;
-    if (noPhotoOnly && images.length > 0) return false;
-
-    return true;
-  });
-
-  const counts = {
-    total: allItems.length,
-    preparing: allItems.filter((item) => item.status === "preparing").length,
-    selling: allItems.filter((item) => item.status === "selling").length,
-    sold: allItems.filter((item) => item.status === "sold").length,
-    inputCompleted: allItems.filter((item) => item.input_completed === true).length,
-    noPhoto: allItems.filter((item) => (item.exhibition_images ?? []).length === 0).length,
-  };
+  const filteredItems = (rawItems ?? [])
+    .filter((item: any) => {
+      const images = item.exhibition_images ?? [];
+      if (noPhotoOnly && images.length > 0) return false;
+      return true;
+    })
+    .slice(from, to + 1);
 
   const buildUrl = (urlParams: Record<string, string>) => {
     const query = new URLSearchParams();
@@ -99,10 +137,19 @@ export default async function ExhibitionAdminPage({
     if (urlParams.staff) query.set("staff", urlParams.staff);
     if (urlParams.status) query.set("status", urlParams.status);
     if (urlParams.noPhoto) query.set("noPhoto", urlParams.noPhoto);
+    if (urlParams.page) query.set("page", urlParams.page);
 
     const qs = query.toString();
     return qs ? `/admin/exhibition?${qs}` : "/admin/exhibition";
   };
+
+  const createPageUrl = (page: number) =>
+    buildUrl({
+      staff: selectedStaff,
+      status: selectedStatus,
+      noPhoto: noPhotoOnly ? "1" : "",
+      page: String(page),
+    });
 
   return (
     <main className="p-6 space-y-6">
@@ -115,25 +162,15 @@ export default async function ExhibitionAdminPage({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/exhibition/orders"
-            className="rounded-lg bg-purple-700 px-4 py-2 font-bold text-white"
-          >
+          <Link href="/admin/exhibition/orders" className="rounded-lg bg-purple-700 px-4 py-2 font-bold text-white">
             売約一覧
           </Link>
 
-          <Link
-            href="/admin/exhibition/import"
-            className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white"
-          >
+          <Link href="/admin/exhibition/import" className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white">
             Excel取込
           </Link>
 
-          <Link
-            href="/exhibition"
-            target="_blank"
-            className="rounded-lg bg-green-700 px-4 py-2 font-bold text-white"
-          >
+          <Link href="/exhibition" target="_blank" className="rounded-lg bg-green-700 px-4 py-2 font-bold text-white">
             買参人画面
           </Link>
         </div>
@@ -179,7 +216,7 @@ export default async function ExhibitionAdminPage({
             <label className="block text-sm text-gray-600 mb-1">担当者</label>
             <select name="staff" defaultValue={selectedStaff} className="border rounded px-3 py-2">
               <option value="">全員</option>
-              {staffList.map((staff) => (
+              {staffList.map((staff: any) => (
                 <option key={staff} value={staff}>
                   {staff}
                 </option>
@@ -212,33 +249,41 @@ export default async function ExhibitionAdminPage({
         </form>
 
         <div className="flex flex-wrap gap-2 text-sm">
-          <Link href={buildUrl({ staff: selectedStaff, status: "", noPhoto: "" })} className="border rounded px-3 py-1">
+          <Link href={buildUrl({ staff: selectedStaff, status: "", noPhoto: "", page: "1" })} className="border rounded px-3 py-1">
             全件
           </Link>
 
-          <Link href={buildUrl({ staff: selectedStaff, status: "preparing", noPhoto: "" })} className="border border-yellow-300 bg-yellow-50 text-yellow-800 rounded px-3 py-1 font-bold">
+          <Link href={buildUrl({ staff: selectedStaff, status: "preparing", noPhoto: "", page: "1" })} className="border border-yellow-300 bg-yellow-50 text-yellow-800 rounded px-3 py-1 font-bold">
             準備中
           </Link>
 
-          <Link href={buildUrl({ staff: selectedStaff, status: "selling", noPhoto: "" })} className="border border-green-300 bg-green-50 text-green-800 rounded px-3 py-1 font-bold">
+          <Link href={buildUrl({ staff: selectedStaff, status: "selling", noPhoto: "", page: "1" })} className="border border-green-300 bg-green-50 text-green-800 rounded px-3 py-1 font-bold">
             販売中
           </Link>
 
-          <Link href={buildUrl({ staff: selectedStaff, status: "sold", noPhoto: "" })} className="border border-red-300 bg-red-50 text-red-800 rounded px-3 py-1 font-bold">
+          <Link href={buildUrl({ staff: selectedStaff, status: "sold", noPhoto: "", page: "1" })} className="border border-red-300 bg-red-50 text-red-800 rounded px-3 py-1 font-bold">
             売約済
           </Link>
 
-          <Link href={buildUrl({ staff: selectedStaff, status: selectedStatus, noPhoto: "1" })} className="border rounded px-3 py-1">
+          <Link href={buildUrl({ staff: selectedStaff, status: selectedStatus, noPhoto: "1", page: "1" })} className="border rounded px-3 py-1">
             未撮影
           </Link>
         </div>
+      </div>
+
+      <div className="rounded-lg border bg-white p-4 text-sm text-gray-600">
+        <p>
+          表示対象：<span className="font-bold">{totalCount}</span> 件
+        </p>
+        <p>
+          {currentPage} / {totalPages} ページ（1ページ30件）
+        </p>
       </div>
 
       <div className="rounded-lg border bg-white overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="p-2 text-left">写真</th>
               <th className="p-2 text-left">枚数</th>
               <th className="p-2 text-left">No</th>
               <th className="p-2 text-left">商品名</th>
@@ -254,31 +299,13 @@ export default async function ExhibitionAdminPage({
           </thead>
 
           <tbody>
-            {filteredItems.map((item) => {
+            {filteredItems.map((item: any) => {
               const images = item.exhibition_images ?? [];
-              const sortedImages = [...images].sort(
-                (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-              );
-              const thumbnail = sortedImages[0];
               const photoCount = images.length;
               const displayPhotoCount = Math.min(photoCount, 3);
 
               return (
                 <tr key={item.id} className="border-t hover:bg-gray-50">
-                  <td className="p-2">
-                    {thumbnail?.image_url ? (
-                      <img
-                        src={thumbnail.image_url}
-                        alt={item.product_name}
-                        className="w-16 h-16 object-cover rounded border"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded border bg-gray-100 flex items-center justify-center text-xs text-gray-400">
-                        未撮影
-                      </div>
-                    )}
-                  </td>
-
                   <td className="p-2">
                     <span className={`rounded-full border px-3 py-1 text-xs font-bold ${photoCountStyle(photoCount)}`}>
                       {displayPhotoCount}/3
@@ -327,7 +354,7 @@ export default async function ExhibitionAdminPage({
 
             {filteredItems.length === 0 && (
               <tr>
-                <td colSpan={12} className="p-6 text-center text-gray-500">
+                <td colSpan={11} className="p-6 text-center text-gray-500">
                   該当する商品がありません。
                 </td>
               </tr>
@@ -335,6 +362,34 @@ export default async function ExhibitionAdminPage({
           </tbody>
         </table>
       </div>
+
+      {totalCount > 0 && (
+        <div className="flex items-center justify-center gap-3 rounded-lg border bg-white p-4">
+          {currentPage > 1 ? (
+            <Link href={createPageUrl(currentPage - 1)} className="rounded bg-gray-200 px-5 py-2 font-bold">
+              前へ
+            </Link>
+          ) : (
+            <span className="rounded bg-gray-100 px-5 py-2 font-bold text-gray-400">
+              前へ
+            </span>
+          )}
+
+          <span className="font-bold text-gray-600">
+            {currentPage} / {totalPages}
+          </span>
+
+          {currentPage < totalPages ? (
+            <Link href={createPageUrl(currentPage + 1)} className="rounded bg-green-700 px-5 py-2 font-bold text-white">
+              次へ
+            </Link>
+          ) : (
+            <span className="rounded bg-gray-100 px-5 py-2 font-bold text-gray-400">
+              次へ
+            </span>
+          )}
+        </div>
+      )}
     </main>
   );
 }

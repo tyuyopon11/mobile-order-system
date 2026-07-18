@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 
+import ConceptNumber from "./components/ConceptNumber";
 import Hero from "./components/Hero";
 import ShopCard from "./components/ShopCard";
 
@@ -99,11 +100,23 @@ export default function HomePage() {
               </p>
 
               <div className="mt-10 grid grid-cols-3 gap-6 border-t border-[#26382f]/15 pt-8">
-                <ConceptNumber number="01" label="CONNECT" delay={0} />
+                <ConceptNumber
+                  number="01"
+                  label="CONNECT"
+                  delay={0}
+                />
 
-                <ConceptNumber number="02" label="GROW" delay={0.1} />
+                <ConceptNumber
+                  number="02"
+                  label="GROW"
+                  delay={0.1}
+                />
 
-                <ConceptNumber number="03" label="EXPAND" delay={0.2} />
+                <ConceptNumber
+                  number="03"
+                  label="EXPAND"
+                  delay={0.2}
+                />
               </div>
             </div>
           </motion.div>
@@ -189,7 +202,9 @@ export default function HomePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-10 md:flex-row md:items-end">
           <div>
-            <p className="font-serif text-3xl">Lei Port</p>
+            <p className="font-serif text-3xl">
+              Lei Port
+            </p>
 
             <p className="mt-2 text-xs tracking-[0.22em] text-[#f4f0e8]/60">
               BtoB MARKETPLACE
@@ -206,43 +221,5 @@ export default function HomePage() {
         </div>
       </motion.footer>
     </main>
-  );
-}
-
-function ConceptNumber({
-  number,
-  label,
-  delay,
-}: {
-  number: string;
-  label: string;
-  delay: number;
-}) {
-  return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        y: 18,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.5,
-      }}
-      transition={{
-        duration: 0.7,
-        delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-    >
-      <p className="font-serif text-2xl text-[#26382f]">{number}</p>
-
-      <p className="mt-2 text-[10px] tracking-[0.2em] text-[#7b877f]">
-        {label}
-      </p>
-    </motion.div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 
 import Hero from "./components/Hero";
+import ShopCard from "./components/ShopCard";
 
 const shops = [
   {
@@ -12,7 +13,7 @@ const shops = [
     description:
       "大型観葉植物や特殊樹形を中心に、一鉢ごとの個性を楽しめる植物をセレクト。",
     href: "/platform/shops/takashimaya",
-    status: "OPEN",
+    status: "OPEN" as const,
   },
   {
     name: "園芸部展示販売",
@@ -20,7 +21,7 @@ const shops = [
     description:
       "季節の鉢花や観葉植物を、展示会形式で提案するBtoB販売ショップ。",
     href: "/platform",
-    status: "COMING SOON",
+    status: "COMING SOON" as const,
   },
   {
     name: "切花部展示販売",
@@ -28,7 +29,7 @@ const shops = [
     description:
       "産地と買参人をつなぎ、新しい切花の販売機会を生み出すショップ。",
     href: "/platform",
-    status: "COMING SOON",
+    status: "COMING SOON" as const,
   },
 ];
 
@@ -98,23 +99,11 @@ export default function HomePage() {
               </p>
 
               <div className="mt-10 grid grid-cols-3 gap-6 border-t border-[#26382f]/15 pt-8">
-                <ConceptNumber
-                  number="01"
-                  label="CONNECT"
-                  delay={0}
-                />
+                <ConceptNumber number="01" label="CONNECT" delay={0} />
 
-                <ConceptNumber
-                  number="02"
-                  label="GROW"
-                  delay={0.1}
-                />
+                <ConceptNumber number="02" label="GROW" delay={0.1} />
 
-                <ConceptNumber
-                  number="03"
-                  label="EXPAND"
-                  delay={0.2}
-                />
+                <ConceptNumber number="03" label="EXPAND" delay={0.2} />
               </div>
             </div>
           </motion.div>
@@ -166,86 +155,17 @@ export default function HomePage() {
           </motion.div>
 
           <div className="mt-14 divide-y divide-[#26382f]/15 border-y border-[#26382f]/15">
-            {shops.map((shop, index) => {
-              const isOpen = shop.status === "OPEN";
-
-              return (
-                <motion.article
-                  key={shop.name}
-                  initial={{
-                    opacity: 0,
-                    y: 30,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  whileHover={
-                    isOpen
-                      ? {
-                          x: 8,
-                        }
-                      : undefined
-                  }
-                  viewport={{
-                    once: true,
-                    amount: 0.25,
-                  }}
-                  transition={{
-                    duration: 0.7,
-                    delay: index * 0.08,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="group grid gap-6 py-9 md:grid-cols-[80px_1fr_1fr_160px] md:items-center md:py-11"
-                >
-                  <span className="font-serif text-xl text-[#7b877f]">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-
-                  <div>
-                    <p className="text-[10px] tracking-[0.28em] text-[#7b877f]">
-                      {shop.category}
-                    </p>
-
-                    <h3 className="mt-3 font-serif text-3xl tracking-[-0.02em] text-[#26382f]">
-                      {shop.name}
-                    </h3>
-                  </div>
-
-                  <p className="max-w-xl leading-8 text-[#5d6a62]">
-                    {shop.description}
-                  </p>
-
-                  <div className="flex items-center justify-between gap-6 md:justify-end">
-                    <span
-                      className={
-                        isOpen
-                          ? "text-[10px] tracking-[0.24em] text-[#26382f]"
-                          : "text-[10px] tracking-[0.24em] text-[#969d98]"
-                      }
-                    >
-                      {shop.status}
-                    </span>
-
-                    {isOpen ? (
-                      <Link
-                        href={shop.href}
-                        aria-label={`${shop.name}を開く`}
-                        className="flex h-12 w-12 items-center justify-center rounded-full border border-[#26382f]/30 text-lg transition-all duration-300 group-hover:border-[#26382f] group-hover:bg-[#26382f] group-hover:text-white"
-                      >
-                        <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                          →
-                        </span>
-                      </Link>
-                    ) : (
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#26382f]/10 text-[#26382f]/25">
-                        —
-                      </span>
-                    )}
-                  </div>
-                </motion.article>
-              );
-            })}
+            {shops.map((shop, index) => (
+              <ShopCard
+                key={shop.name}
+                index={index}
+                name={shop.name}
+                category={shop.category}
+                description={shop.description}
+                href={shop.href}
+                status={shop.status}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -318,9 +238,7 @@ function ConceptNumber({
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <p className="font-serif text-2xl text-[#26382f]">
-        {number}
-      </p>
+      <p className="font-serif text-2xl text-[#26382f]">{number}</p>
 
       <p className="mt-2 text-[10px] tracking-[0.2em] text-[#7b877f]">
         {label}

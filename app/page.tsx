@@ -5,14 +5,13 @@ import { motion } from "motion/react";
 import ConceptNumber from "./components/ConceptNumber";
 import Hero from "./components/Hero";
 import MotionLink from "./components/MotionLink";
+import SectionTitle from "./components/SectionTitle";
 import ShopCard from "./components/ShopCard";
 import {
   createDelayTransition,
-  defaultTransition,
   fadeIn,
   fadeUp,
   footerTransition,
-  sectionFadeUp,
   viewportOnce,
 } from "./components/lib/animations";
 
@@ -51,23 +50,16 @@ export default function HomePage() {
       {/* CONCEPT */}
       <section className="px-6 py-24 md:px-12 md:py-32 lg:px-20">
         <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            transition={defaultTransition}
-          >
-            <p className="text-xs font-medium tracking-[0.3em] text-[#7b877f]">
-              OUR CONCEPT
-            </p>
-
-            <h2 className="mt-6 font-serif text-4xl leading-tight tracking-[-0.03em] md:text-6xl">
-              商流をつなぎ、
-              <br />
-              価値を育てる。
-            </h2>
-          </motion.div>
+          <SectionTitle
+            eyebrow="OUR CONCEPT"
+            title={
+              <>
+                商流をつなぎ、
+                <br />
+                価値を育てる。
+              </>
+            }
+          />
 
           <motion.div
             variants={fadeUp}
@@ -85,23 +77,11 @@ export default function HomePage() {
               </p>
 
               <div className="mt-10 grid grid-cols-3 gap-6 border-t border-[#26382f]/15 pt-8">
-                <ConceptNumber
-                  number="01"
-                  label="CONNECT"
-                  delay={0}
-                />
+                <ConceptNumber number="01" label="CONNECT" delay={0} />
 
-                <ConceptNumber
-                  number="02"
-                  label="GROW"
-                  delay={0.1}
-                />
+                <ConceptNumber number="02" label="GROW" delay={0.1} />
 
-                <ConceptNumber
-                  number="03"
-                  label="EXPAND"
-                  delay={0.2}
-                />
+                <ConceptNumber number="03" label="EXPAND" delay={0.2} />
               </div>
             </div>
           </motion.div>
@@ -111,35 +91,23 @@ export default function HomePage() {
       {/* SHOPS */}
       <section className="border-y border-[#26382f]/10 bg-[#ebe5da] px-6 py-24 md:px-12 md:py-32 lg:px-20">
         <div className="mx-auto max-w-7xl">
-          <motion.div
-            variants={sectionFadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            transition={defaultTransition}
-            className="flex flex-col justify-between gap-6 md:flex-row md:items-end"
-          >
-            <div>
-              <p className="text-xs font-medium tracking-[0.3em] text-[#7b877f]">
-                SHOPS
-              </p>
+          <SectionTitle
+            eyebrow="SHOPS"
+            title="Marketplace"
+            variant="shops"
+            action={
+              <MotionLink
+                href="/platform"
+                className="group inline-flex items-center gap-4 text-sm tracking-[0.16em] text-[#26382f]"
+              >
+                すべてのショップを見る
 
-              <h2 className="mt-5 font-serif text-4xl tracking-[-0.03em] md:text-6xl">
-                Marketplace
-              </h2>
-            </div>
-
-            <MotionLink
-              href="/platform"
-              className="group inline-flex items-center gap-4 text-sm tracking-[0.16em] text-[#26382f]"
-            >
-              すべてのショップを見る
-
-              <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
-                →
-              </span>
-            </MotionLink>
-          </motion.div>
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
+                  →
+                </span>
+              </MotionLink>
+            }
+          />
 
           <div className="mt-14 divide-y divide-[#26382f]/15 border-y border-[#26382f]/15">
             {shops.map((shop, index) => (

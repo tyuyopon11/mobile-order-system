@@ -3,15 +3,14 @@
 import { motion } from "motion/react";
 
 import ConceptNumber from "./components/ConceptNumber";
+import Footer from "./components/Footer";
 import Hero from "./components/Hero";
 import MotionLink from "./components/MotionLink";
 import SectionTitle from "./components/SectionTitle";
 import ShopCard from "./components/ShopCard";
 import {
   createDelayTransition,
-  fadeIn,
   fadeUp,
-  footerTransition,
   viewportOnce,
 } from "./components/lib/animations";
 
@@ -77,11 +76,23 @@ export default function HomePage() {
               </p>
 
               <div className="mt-10 grid grid-cols-3 gap-6 border-t border-[#26382f]/15 pt-8">
-                <ConceptNumber number="01" label="CONNECT" delay={0} />
+                <ConceptNumber
+                  number="01"
+                  label="CONNECT"
+                  delay={0}
+                />
 
-                <ConceptNumber number="02" label="GROW" delay={0.1} />
+                <ConceptNumber
+                  number="02"
+                  label="GROW"
+                  delay={0.1}
+                />
 
-                <ConceptNumber number="03" label="EXPAND" delay={0.2} />
+                <ConceptNumber
+                  number="03"
+                  label="EXPAND"
+                  delay={0.2}
+                />
               </div>
             </div>
           </motion.div>
@@ -125,38 +136,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <motion.footer
-        variants={fadeIn}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{
-          once: true,
-          amount: 0.25,
-        }}
-        transition={footerTransition}
-        className="bg-[#26382f] px-6 py-16 text-[#f4f0e8] md:px-12 lg:px-20"
-      >
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-10 md:flex-row md:items-end">
-          <div>
-            <p className="font-serif text-3xl">
-              Lei Port
-            </p>
-
-            <p className="mt-2 text-xs tracking-[0.22em] text-[#f4f0e8]/60">
-              BtoB MARKETPLACE
-            </p>
-          </div>
-
-          <div className="text-sm leading-7 text-[#f4f0e8]/65 md:text-right">
-            <p>Operated by Tokyo Flower Port</p>
-
-            <p className="mt-3 text-xs">
-              © {new Date().getFullYear()} Lei Port Marketplace
-            </p>
-          </div>
-        </div>
-      </motion.footer>
+      <Footer />
     </main>
   );
 }

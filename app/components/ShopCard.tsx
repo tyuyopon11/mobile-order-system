@@ -1,7 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
+
+import MotionLink from "./MotionLink";
+import {
+  cardFadeUp,
+  createCardTransition,
+} from "./lib/animations";
 
 type ShopCardProps = {
   index: number;
@@ -24,14 +29,9 @@ export default function ShopCard({
 
   return (
     <motion.article
-      initial={{
-        opacity: 0,
-        y: 30,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
+      variants={cardFadeUp}
+      initial="hidden"
+      whileInView="visible"
       whileHover={
         isOpen
           ? {
@@ -43,11 +43,7 @@ export default function ShopCard({
         once: true,
         amount: 0.25,
       }}
-      transition={{
-        duration: 0.7,
-        delay: index * 0.08,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      transition={createCardTransition(index)}
       className="group grid gap-6 py-9 md:grid-cols-[80px_1fr_1fr_160px] md:items-center md:py-11"
     >
       <span className="font-serif text-xl text-[#7b877f]">
@@ -80,7 +76,7 @@ export default function ShopCard({
         </span>
 
         {isOpen ? (
-          <Link
+          <MotionLink
             href={href}
             aria-label={`${name}を開く`}
             className="flex h-12 w-12 items-center justify-center rounded-full border border-[#26382f]/30 text-lg transition-all duration-300 group-hover:border-[#26382f] group-hover:bg-[#26382f] group-hover:text-white"
@@ -88,7 +84,7 @@ export default function ShopCard({
             <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
               →
             </span>
-          </Link>
+          </MotionLink>
         ) : (
           <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#26382f]/10 text-[#26382f]/25">
             —

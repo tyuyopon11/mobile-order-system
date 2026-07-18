@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
 
 import BotanicalDecoration from "./BotanicalDecoration";
-
-const MotionLink = motion.create(Link);
+import MotionLink from "./MotionLink";
+import { premiumEase } from "./lib/animations";
 
 export default function Hero() {
   return (
@@ -26,7 +25,7 @@ export default function Hero() {
             transition={{
               duration: 0.8,
               delay: 0.1,
-              ease: [0.22, 1, 0.36, 1],
+              ease: premiumEase,
             }}
             className="mb-6 text-xs font-medium tracking-[0.38em] text-[#66746c] md:text-sm"
           >
@@ -46,7 +45,7 @@ export default function Hero() {
               transition={{
                 duration: 1,
                 delay: 0.25,
-                ease: [0.22, 1, 0.36, 1],
+                ease: premiumEase,
               }}
               className="font-serif text-[clamp(3.2rem,10vw,8.8rem)] leading-[0.88] tracking-[-0.055em] text-[#26382f]"
             >
@@ -67,7 +66,7 @@ export default function Hero() {
               transition={{
                 duration: 1,
                 delay: 0.42,
-                ease: [0.22, 1, 0.36, 1],
+                ease: premiumEase,
               }}
               className="mt-3 font-serif text-[clamp(2rem,6vw,5.4rem)] leading-none tracking-[-0.04em] text-[#26382f]/90"
             >
@@ -85,7 +84,7 @@ export default function Hero() {
             transition={{
               duration: 0.8,
               delay: 0.72,
-              ease: [0.22, 1, 0.36, 1],
+              ease: premiumEase,
             }}
             className="mt-10 h-px w-24 origin-left bg-[#26382f]/40"
           />
@@ -102,7 +101,7 @@ export default function Hero() {
             transition={{
               duration: 0.8,
               delay: 0.82,
-              ease: [0.22, 1, 0.36, 1],
+              ease: premiumEase,
             }}
             className="mt-8 max-w-2xl text-lg leading-9 text-[#536159] md:text-xl"
           >
@@ -123,7 +122,7 @@ export default function Hero() {
             transition={{
               duration: 0.9,
               delay: 1,
-              ease: [0.22, 1, 0.36, 1],
+              ease: premiumEase,
             }}
             className="mt-5 font-serif text-2xl italic tracking-wide text-[#26382f] md:text-3xl"
           >
@@ -142,7 +141,7 @@ export default function Hero() {
             transition={{
               duration: 0.9,
               delay: 1.18,
-              ease: [0.22, 1, 0.36, 1],
+              ease: premiumEase,
             }}
             className="mt-12 flex flex-col gap-4 sm:flex-row"
           >
@@ -152,18 +151,12 @@ export default function Hero() {
             >
               <span>MARKETPLACE</span>
 
-              <motion.span
-                className="inline-block"
-                initial={{
-                  x: 0,
-                }}
-                whileHover={{
-                  x: 0,
-                }}
+              <span
                 aria-hidden="true"
+                className="inline-block transition-transform duration-300 group-hover:translate-x-1.5"
               >
                 →
-              </motion.span>
+              </span>
             </MotionLink>
 
             <MotionLink
@@ -180,36 +173,36 @@ export default function Hero() {
               </span>
             </MotionLink>
           </motion.div>
-        </div>
 
-        <motion.div
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            duration: 1,
-            delay: 1.5,
-          }}
-          className="mt-20 flex items-center gap-4 text-xs tracking-[0.26em] text-[#7b877f]"
-        >
-          <span>SCROLL</span>
-
-          <motion.span
+          <motion.div
+            initial={{
+              opacity: 0,
+            }}
             animate={{
-              scaleX: [1, 0.55, 1],
-              opacity: [0.45, 1, 0.45],
+              opacity: 1,
             }}
             transition={{
-              duration: 2.4,
-              repeat: Infinity,
-              ease: "easeInOut",
+              duration: 1,
+              delay: 1.5,
             }}
-            className="h-px w-16 origin-left bg-[#7b877f]/70"
-          />
-        </motion.div>
+            className="mt-20 flex items-center gap-4 text-xs tracking-[0.26em] text-[#7b877f]"
+          >
+            <span>SCROLL</span>
+
+            <motion.span
+              animate={{
+                scaleX: [1, 0.55, 1],
+                opacity: [0.45, 1, 0.45],
+              }}
+              transition={{
+                duration: 2.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="h-px w-16 origin-left bg-[#7b877f]/70"
+            />
+          </motion.div>
+        </div>
       </div>
     </section>
   );

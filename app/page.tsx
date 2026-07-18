@@ -1,11 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
 
 import ConceptNumber from "./components/ConceptNumber";
 import Hero from "./components/Hero";
+import MotionLink from "./components/MotionLink";
 import ShopCard from "./components/ShopCard";
+import {
+  createDelayTransition,
+  defaultTransition,
+  fadeIn,
+  fadeUp,
+  footerTransition,
+  sectionFadeUp,
+  viewportOnce,
+} from "./components/lib/animations";
 
 const shops = [
   {
@@ -34,17 +43,6 @@ const shops = [
   },
 ];
 
-const fadeUp = {
-  hidden: {
-    opacity: 0,
-    y: 28,
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-  },
-};
-
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f4f0e8] text-[#25342c]">
@@ -57,14 +55,8 @@ export default function HomePage() {
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{
-              once: true,
-              amount: 0.3,
-            }}
-            transition={{
-              duration: 0.9,
-              ease: [0.22, 1, 0.36, 1],
-            }}
+            viewport={viewportOnce}
+            transition={defaultTransition}
           >
             <p className="text-xs font-medium tracking-[0.3em] text-[#7b877f]">
               OUR CONCEPT
@@ -81,15 +73,8 @@ export default function HomePage() {
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{
-              once: true,
-              amount: 0.3,
-            }}
-            transition={{
-              duration: 0.9,
-              delay: 0.15,
-              ease: [0.22, 1, 0.36, 1],
-            }}
+            viewport={viewportOnce}
+            transition={createDelayTransition(0.15)}
             className="flex items-end"
           >
             <div className="max-w-2xl">
@@ -127,22 +112,11 @@ export default function HomePage() {
       <section className="border-y border-[#26382f]/10 bg-[#ebe5da] px-6 py-24 md:px-12 md:py-32 lg:px-20">
         <div className="mx-auto max-w-7xl">
           <motion.div
-            initial={{
-              opacity: 0,
-              y: 35,
-            }}
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-            viewport={{
-              once: true,
-              amount: 0.3,
-            }}
-            transition={{
-              duration: 0.9,
-              ease: [0.22, 1, 0.36, 1],
-            }}
+            variants={sectionFadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            transition={defaultTransition}
             className="flex flex-col justify-between gap-6 md:flex-row md:items-end"
           >
             <div>
@@ -155,7 +129,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <Link
+            <MotionLink
               href="/platform"
               className="group inline-flex items-center gap-4 text-sm tracking-[0.16em] text-[#26382f]"
             >
@@ -164,7 +138,7 @@ export default function HomePage() {
               <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
                 →
               </span>
-            </Link>
+            </MotionLink>
           </motion.div>
 
           <div className="mt-14 divide-y divide-[#26382f]/15 border-y border-[#26382f]/15">
@@ -185,19 +159,14 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <motion.footer
-        initial={{
-          opacity: 0,
-        }}
-        whileInView={{
-          opacity: 1,
-        }}
+        variants={fadeIn}
+        initial="hidden"
+        whileInView="visible"
         viewport={{
           once: true,
           amount: 0.25,
         }}
-        transition={{
-          duration: 1,
-        }}
+        transition={footerTransition}
         className="bg-[#26382f] px-6 py-16 text-[#f4f0e8] md:px-12 lg:px-20"
       >
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-10 md:flex-row md:items-end">

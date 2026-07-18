@@ -2,6 +2,12 @@
 
 import { motion } from "motion/react";
 
+import {
+  createDelayTransition,
+  subtleFadeUp,
+  viewportHalf,
+} from "./lib/animations";
+
 type ConceptNumberProps = {
   number: string;
   label: string;
@@ -15,23 +21,11 @@ export default function ConceptNumber({
 }: ConceptNumberProps) {
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 18,
-      }}
-      whileInView={{
-        opacity: 1,
-        y: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.5,
-      }}
-      transition={{
-        duration: 0.7,
-        delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      variants={subtleFadeUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportHalf}
+      transition={createDelayTransition(delay, 0.7)}
     >
       <p className="font-serif text-2xl text-[#26382f]">
         {number}

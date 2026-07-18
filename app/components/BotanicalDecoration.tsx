@@ -2,6 +2,8 @@
 
 import { motion } from "motion/react";
 
+import { premiumEase } from "./lib/animations";
+
 const paths = [
   "M402 941C389 783 400 646 453 504C497 386 562 286 662 180",
   "M447 517C346 469 294 389 284 277C382 310 442 393 447 517Z",
@@ -38,7 +40,7 @@ export default function BotanicalDecoration() {
         x: {
           duration: 1.4,
           delay: 0.35,
-          ease: [0.22, 1, 0.36, 1],
+          ease: premiumEase,
         },
         y: {
           duration: 12,

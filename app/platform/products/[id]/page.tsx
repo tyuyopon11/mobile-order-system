@@ -38,6 +38,7 @@ export default async function ProductPage({ params }: Props) {
             <ProductInfo product={product} />
 
             <PurchaseCard
+              productId={String(product.id)}
               quantity={product.quantity}
               shopSlug={product.shop.slug}
             />

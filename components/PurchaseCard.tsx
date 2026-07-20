@@ -1,9 +1,13 @@
+import Link from "next/link";
+
 type PurchaseCardProps = {
+  productId: string;
   quantity?: number | null;
   shopSlug?: string;
 };
 
 export default function PurchaseCard({
+  productId,
   quantity,
   shopSlug = "",
 }: PurchaseCardProps) {
@@ -22,7 +26,9 @@ export default function PurchaseCard({
       </p>
 
       <h2 className="mt-3 text-xl font-semibold text-stone-900">
-        {isSoldOut ? "こちらの植物は売約済みです" : "ご購入について"}
+        {isSoldOut
+          ? "こちらの植物は売約済みです"
+          : "ご購入について"}
       </h2>
 
       {!isSoldOut && (
@@ -33,17 +39,22 @@ export default function PurchaseCard({
         </p>
       )}
 
-      <button
-        type="button"
-        disabled={isSoldOut}
-        className={`mt-6 w-full rounded-full px-6 py-4 text-base font-semibold transition duration-300 sm:py-5 sm:text-lg ${
-          isSoldOut
-            ? "cursor-not-allowed bg-stone-200 text-stone-500"
-            : "bg-green-800 text-white shadow-[0_10px_24px_rgba(22,101,52,0.18)] hover:-translate-y-0.5 hover:bg-green-900 hover:shadow-[0_14px_30px_rgba(22,101,52,0.22)]"
-        }`}
-      >
-        {isSoldOut ? "売約済み" : "購入手続きへ"}
-      </button>
+      {isSoldOut ? (
+        <button
+          type="button"
+          disabled
+          className="mt-6 w-full cursor-not-allowed rounded-full bg-stone-200 px-6 py-4 text-base font-semibold text-stone-500 sm:py-5 sm:text-lg"
+        >
+          売約済み
+        </button>
+      ) : (
+        <Link
+          href={`/platform/order/${productId}`}
+          className="mt-6 flex w-full items-center justify-center rounded-full bg-green-800 px-6 py-4 text-base font-semibold text-white shadow-[0_10px_24px_rgba(22,101,52,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-green-900 hover:shadow-[0_14px_30px_rgba(22,101,52,0.22)] sm:py-5 sm:text-lg"
+        >
+          購入手続きへ
+        </Link>
+      )}
 
       {!isSoldOut && (
         <p className="mt-4 text-center text-xs leading-6 text-stone-400">

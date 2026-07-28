@@ -545,7 +545,7 @@ export default async function ExhibitionAdminPage({
               </th>
 
               <th className="p-3 text-right">
-                価格
+                価格（税抜）
               </th>
 
               <th className="p-3 text-left">

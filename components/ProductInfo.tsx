@@ -1,4 +1,9 @@
 import type { Product } from "@/lib/types/product";
+import {
+  formatSalesUnitQuantity,
+  formatUnitsPerSalesUnit,
+  getSalesUnitLabel,
+} from "@/lib/products/sales-unit";
 
 type ProductInfoProps = {
   product: Product;
@@ -43,7 +48,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const isOneOfAKind =
     product.quantity !== undefined &&
     product.quantity !== null &&
-    product.quantity === 1;
+    product.quantity === 1 &&
+    product.units_per_sales_unit === 1;
 
   return (
     <div className="space-y-7">
@@ -218,17 +224,28 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             </p>
 
             {product.price != null && (
-              <p className="mt-2 text-xs text-stone-400">税込価格</p>
+              <p className="mt-2 text-xs text-stone-400">
+                1{getSalesUnitLabel(product.sales_unit)}あたり・税抜価格
+              </p>
             )}
+            <p className="mt-3 text-sm font-medium text-green-800">
+              {formatUnitsPerSalesUnit(
+                product.units_per_sales_unit,
+                product.sales_unit
+              )}
+            </p>
           </div>
 
           {product.quantity !== undefined &&
             product.quantity !== null &&
             !isTakashimaya && (
               <div className="sm:text-right">
-                <p className="text-xs text-stone-400">販売可能数</p>
+                <p className="text-xs text-stone-400">販売可能</p>
                 <p className="mt-1 text-xl font-semibold text-stone-800">
-                  {product.quantity}
+                  {formatSalesUnitQuantity(
+                    product.quantity,
+                    product.sales_unit
+                  )}
                 </p>
               </div>
             )}

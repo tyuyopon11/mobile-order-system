@@ -192,7 +192,7 @@ export default async function ExhibitionOrdersPage() {
                     <th className="p-2 text-left">商品名</th>
                     <th className="p-2 text-left">規格</th>
                     <th className="p-2 text-right">数量</th>
-                    <th className="p-2 text-right">価格</th>
+                    <th className="p-2 text-right">価格（税抜）</th>
                     <th className="p-2 text-left">担当</th>
                     <th className="p-2 text-left">入力</th>
                   </tr>

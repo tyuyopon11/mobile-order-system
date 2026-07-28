@@ -74,6 +74,19 @@ export default async function LoginPage({
             <LoginForm nextPath={nextPath} />
 
             <div className="mt-7 border-t border-neutral-100 pt-6">
+              <p className="text-center text-sm text-neutral-600">
+                Lei Portを初めて利用する方
+              </p>
+
+              <Link
+                href="/platform/register"
+                className="mt-3 flex w-full items-center justify-center rounded-xl border border-neutral-300 bg-white px-4 py-3.5 text-base font-medium text-neutral-800 transition hover:border-neutral-500 hover:bg-neutral-50"
+              >
+                新規利用を申請する
+              </Link>
+            </div>
+
+            <div className="mt-7 border-t border-neutral-100 pt-6">
               <p className="text-center text-xs leading-6 text-neutral-500">
                 Lei Portは東京フラワーポートの
                 <br />

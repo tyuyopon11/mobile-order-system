@@ -284,7 +284,9 @@ export default async function ExhibitionItemDetailPage({
               </div>
 
               <div>
-                <dt className="text-xs font-bold text-gray-500">販売価格</dt>
+                <dt className="text-xs font-bold text-gray-500">
+                  販売価格（税抜）
+                </dt>
                 <dd className="mt-1 text-xl font-bold text-green-700">
                   {item.price !== undefined &&
                   item.price !== null &&

@@ -1,7 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import ProductCard from "@/components/product/ProductCard";
+import ProductCatalog from "@/components/product/ProductCatalog";
+import FavoriteShopButton from "@/app/platform/favorites/FavoriteShopButton";
+import { createClient } from "@/lib/supabase/server";
 import { getShop, getShopItems } from "@/lib/shop";
 
 type PageProps = {
@@ -71,10 +74,21 @@ export default async function ShopPage({
     notFound();
   }
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: favorite } = user
+    ? await supabase
+        .from("favorite_shops")
+        .select("shop_id")
+        .eq("user_id", user.id)
+        .eq("shop_id", shop.id)
+        .maybeSingle()
+    : { data: null };
+
   const { items, totalCount, totalPages } = await getShopItems(
     shop.id,
     currentPage,
-    30
+    500
   );
 
   const brand = getShopBrand(shop.shop_name, shop.slug);
@@ -96,39 +110,109 @@ export default async function ShopPage({
           </Link>
         </div>
 
-        <section className="overflow-hidden rounded-[2rem] border border-stone-200/80 bg-white shadow-[0_18px_60px_rgba(54,65,48,0.08)]">
-          <div className="px-6 py-12 sm:px-10 sm:py-16 lg:px-16 lg:py-20">
+        <section className="relative overflow-hidden rounded-[2rem] border border-stone-200/80 bg-white shadow-[0_18px_60px_rgba(54,65,48,0.08)]">
+          {shop.banner_url && (
+            <>
+              <Image
+                src={shop.banner_url}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 1440px) 100vw, 1344px"
+                className="object-cover"
+              />
+              <div
+                className="absolute inset-0 bg-gradient-to-b from-stone-950/45 via-stone-950/55 to-stone-950/70"
+                aria-hidden="true"
+              />
+            </>
+          )}
+
+          <div className="relative z-10 px-6 py-12 sm:px-10 sm:py-16 lg:px-16 lg:py-20">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-              <p className="text-xs font-semibold tracking-[0.3em] text-green-800 sm:text-sm">
+              <p
+                className={`text-xs font-semibold tracking-[0.3em] sm:text-sm ${
+                  shop.banner_url ? "text-green-100" : "text-green-800"
+                }`}
+              >
                 {brand.eyebrow}
               </p>
 
               {shop.logo_url ? (
-                <img
-                  src={shop.logo_url}
-                  alt={`${shop.shop_name} ロゴ`}
-                  className="mt-8 h-36 w-36 object-contain sm:h-44 sm:w-44"
-                />
+                <div
+                  className={`relative mt-8 h-36 w-36 overflow-hidden rounded-2xl sm:h-44 sm:w-44 ${
+                    shop.banner_url
+                      ? "border border-white/60 bg-white/90 shadow-xl backdrop-blur-sm"
+                      : ""
+                  }`}
+                >
+                  <Image
+                    src={shop.logo_url}
+                    alt={`${shop.shop_name} ロゴ`}
+                    fill
+                    sizes="176px"
+                    className="object-contain p-3"
+                  />
+                </div>
               ) : (
-                <div className="mt-8 flex h-36 w-36 items-center justify-center rounded-full bg-green-50 text-5xl sm:h-44 sm:w-44">
+                <div
+                  className={`mt-8 flex h-36 w-36 items-center justify-center rounded-full text-5xl sm:h-44 sm:w-44 ${
+                    shop.banner_url
+                      ? "border border-white/60 bg-white/90 shadow-xl backdrop-blur-sm"
+                      : "bg-green-50"
+                  }`}
+                >
                   🌿
                 </div>
               )}
 
-              <h1 className="mt-8 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl lg:text-5xl">
+              <h1
+                className={`mt-8 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl ${
+                  shop.banner_url
+                    ? "text-white drop-shadow-md"
+                    : "text-stone-900"
+                }`}
+              >
                 {shop.shop_name}
               </h1>
 
-              <p className="mt-7 text-xl font-medium leading-relaxed text-stone-800 sm:text-2xl">
+              <p
+                className={`mt-7 text-xl font-medium leading-relaxed sm:text-2xl ${
+                  shop.banner_url
+                    ? "text-white drop-shadow-sm"
+                    : "text-stone-800"
+                }`}
+              >
                 {brand.catchCopy}
               </p>
 
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-500 sm:text-base">
+              <p
+                className={`mt-5 max-w-2xl text-sm leading-7 sm:text-base ${
+                  shop.banner_url ? "text-stone-100" : "text-stone-500"
+                }`}
+              >
                 {shop.description || brand.subCopy}
               </p>
             </div>
           </div>
         </section>
+
+        {shop.announcement && (
+          <section className="mb-8 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 sm:px-6">
+            <p className="text-xs font-bold tracking-[0.16em] text-green-800">
+              ショップからのお知らせ
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-stone-700">
+              {shop.announcement}
+            </p>
+          </section>
+        )}
+
+        {user && (
+          <div className="mb-6 flex justify-end">
+            <FavoriteShopButton shopId={shop.id} initialFavorite={Boolean(favorite)} />
+          </div>
+        )}
 
         <section className="pb-14 pt-14 sm:pb-20 sm:pt-20">
           <div className="mb-8 flex flex-col gap-5 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
@@ -173,11 +257,7 @@ export default async function ShopPage({
               </p>
             </div>
           ) : (
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
-              {items.map((item: any) => (
-                <ProductCard key={item.id} item={item} />
-              ))}
-            </div>
+            <ProductCatalog items={items} />
           )}
 
           {totalPages > 1 && (

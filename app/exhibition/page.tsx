@@ -280,6 +280,7 @@ export default async function ExhibitionBuyerPage({
 
                       <p className="text-2xl font-bold">
                         ¥{Number(item.price ?? 0).toLocaleString()}
+                        <span className="ml-1 text-sm font-normal">（税抜）</span>
                       </p>
 
                       <form action="/api/exhibition/orders" method="POST">

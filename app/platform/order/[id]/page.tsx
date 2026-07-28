@@ -4,6 +4,15 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getProduct } from "@/lib/services/product";
+import {
+  formatUnitsPerSalesUnit,
+  getSalesUnitLabel,
+} from "@/lib/products/sales-unit";
+import {
+  generateFallbackAuctionDates,
+  isShopAuctionDate,
+  todayInTokyo,
+} from "@/lib/orders/auction-dates";
 import OrderForm from "./OrderForm";
 
 type OrderPageProps = {
@@ -12,12 +21,38 @@ type OrderPageProps = {
   }>;
 };
 
+type PlatformUserProfile = {
+  company_name: string;
+  buyer_no: string | null;
+  branch_no: string | null;
+  name: string;
+  phone: string | null;
+  email: string;
+  approval_status: string;
+  is_active: boolean;
+};
+
 function formatPrice(price: number | null) {
   if (price === null) {
     return "価格未設定";
   }
 
   return `${price.toLocaleString("ja-JP")}円`;
+}
+
+function getBuyerNumber(
+  buyerNo: string | null,
+  branchNo: string | null
+) {
+  if (!buyerNo) {
+    return "";
+  }
+
+  if (!branchNo) {
+    return buyerNo;
+  }
+
+  return `${buyerNo}-${branchNo}`;
 }
 
 export default async function OrderPage({
@@ -32,10 +67,81 @@ export default async function OrderPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/platform/login");
+    redirect(
+      `/platform/login?next=${encodeURIComponent(
+        `/platform/order/${id}`
+      )}`
+    );
+  }
+
+  const { data: profile, error: profileError } =
+    await supabase
+      .from("platform_users")
+      .select(
+        `
+          company_name,
+          buyer_no,
+          branch_no,
+          name,
+          phone,
+          email,
+          approval_status,
+          is_active
+        `
+      )
+      .eq("auth_user_id", user.id)
+      .maybeSingle<PlatformUserProfile>();
+
+  if (profileError) {
+    console.error(
+      "[Lei Port Order] Failed to load buyer profile:",
+      profileError.message
+    );
+  }
+
+  if (
+    !profile ||
+    profile.approval_status !== "approved" ||
+    !profile.is_active
+  ) {
+    await supabase.auth.signOut();
+
+    redirect(
+      `/platform/login?next=${encodeURIComponent(
+        `/platform/order/${id}`
+      )}`
+    );
   }
 
   const product = await getProduct(id);
+  const { data: auctionDateRows, error: auctionDatesError } = await supabase
+    .from("auction_dates")
+    .select("auction_date")
+    .eq("is_active", true)
+    .gte("auction_date", todayInTokyo())
+    .order("auction_date", { ascending: true })
+    .limit(60);
+
+  if (auctionDatesError) {
+    console.error(
+      "[Lei Port Order] Failed to load auction_dates:",
+      auctionDatesError.message
+    );
+  }
+
+  const configuredDates =
+    !auctionDatesError && auctionDateRows?.length
+      ? auctionDateRows.map((row) => String(row.auction_date))
+      : generateFallbackAuctionDates();
+
+  const allowedAuctionDates = configuredDates.filter((date) =>
+    isShopAuctionDate(date, {
+      orderingEnabled: product.shop.ordering_enabled,
+      acceptsTuesday: product.shop.accepts_tuesday,
+      acceptsSaturday: product.shop.accepts_saturday,
+      cutoffHours: product.shop.order_cutoff_hours,
+    })
+  );
 
   const isSoldOut =
     product.quantity !== null && product.quantity <= 0;
@@ -128,9 +234,19 @@ export default async function OrderPage({
                 )}
 
                 <div className="flex justify-between gap-5">
-                  <dt className="text-stone-400">販売価格</dt>
+                  <dt className="text-stone-400">販売価格（税抜）</dt>
                   <dd className="text-right text-lg font-semibold text-stone-900">
-                    {formatPrice(product.price)}
+                    {formatPrice(product.price)}／
+                    {getSalesUnitLabel(product.sales_unit)}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-5">
+                  <dt className="text-stone-400">販売単位・入数</dt>
+                  <dd className="text-right font-medium text-stone-700">
+                    {formatUnitsPerSalesUnit(
+                      product.units_per_sales_unit,
+                      product.sales_unit
+                    )}
                   </dd>
                 </div>
               </dl>
@@ -142,7 +258,17 @@ export default async function OrderPage({
             productName={product.name}
             unitPrice={product.price}
             availableQuantity={product.quantity}
-            defaultEmail={user.email ?? ""}
+            salesUnit={product.sales_unit}
+            unitsPerSalesUnit={product.irisu}
+            allowedAuctionDates={allowedAuctionDates}
+            defaultCompanyName={profile.company_name}
+            defaultBuyerNumber={getBuyerNumber(
+              profile.buyer_no,
+              profile.branch_no
+            )}
+            defaultContactName={profile.name}
+            defaultPhone={profile.phone ?? ""}
+            defaultEmail={profile.email || user.email || ""}
           />
         </div>
       </div>

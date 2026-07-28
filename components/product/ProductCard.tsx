@@ -8,95 +8,71 @@ type ProductCardProps = {
     | "id"
     | "name"
     | "image"
+    | "category"
+    | "tree_height"
+    | "tree_shape"
+    | "pot_size"
     | "quantity"
-    | "comment"
+    | "price"
+    | "irisu"
   >;
 };
 
 export default function ProductCard({ item }: ProductCardProps) {
-  const isSoldOut =
-    item.quantity !== undefined &&
-    item.quantity !== null &&
-    item.quantity <= 0;
-
-  const isOneOfAKind =
-    item.quantity !== undefined &&
-    item.quantity !== null &&
-    item.quantity === 1;
-
-  const attraction =
-    item.comment?.trim() ||
-    "樹形や葉の表情など、この植物ならではの魅力を詳細ページでご紹介します。";
+  const soldOut = item.quantity !== null && item.quantity <= 0;
 
   return (
-    <article className="group flex h-full flex-col">
-      <Link
-        href={`/platform/products/${item.id}`}
-        aria-label={`${item.name}の詳細を見る`}
-        className="block"
-      >
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] border border-stone-200 bg-[#ecebe5] shadow-[0_14px_40px_rgba(54,65,48,0.08)] transition duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_22px_55px_rgba(54,65,48,0.14)]">
-          {item.image ? (
-            <img
-              src={item.image}
-              alt={item.name}
-              className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
-            />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center text-stone-400">
-              <span className="text-4xl">🌿</span>
-              <span className="mt-3 text-xs tracking-widest">
-                NO IMAGE
-              </span>
-            </div>
-          )}
-
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-60" />
-
-          {isOneOfAKind && !isSoldOut && (
-            <div className="absolute left-4 top-4 rounded-full border border-white/60 bg-white/85 px-4 py-2 text-[11px] font-semibold tracking-[0.18em] text-stone-700 shadow-sm backdrop-blur">
-              ONE OF A KIND
-            </div>
-          )}
-
-          {isSoldOut && (
-            <div className="absolute inset-0 flex items-center justify-center bg-stone-900/45 backdrop-blur-[1px]">
-              <span className="rounded-full border border-white/70 bg-white/90 px-6 py-3 text-sm font-semibold tracking-wider text-stone-800">
-                売約済み
-              </span>
-            </div>
-          )}
-        </div>
+    <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-[0_10px_32px_rgba(54,65,48,0.06)]">
+      <Link href={`/platform/products/${item.id}`} className="relative block aspect-[4/5] overflow-hidden bg-[#ecebe5]">
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-[#f4f5ef] to-[#e7ebe2] px-6 text-center">
+            <span className="text-4xl text-green-800/70" aria-hidden="true">🌿</span>
+            <span className="mt-4 text-sm font-medium text-stone-600">商品画像準備中</span>
+            <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-green-800">
+              Lei Port Marketplace
+            </span>
+          </div>
+        )}
+        {soldOut && (
+          <div className="absolute inset-0 flex items-center justify-center bg-stone-900/45">
+            <span className="rounded-full bg-white/95 px-5 py-2 text-sm font-bold text-stone-800">
+              売り切れ
+            </span>
+          </div>
+        )}
       </Link>
 
-      <div className="flex flex-1 flex-col px-1 pb-2 pt-6">
-        <h3 className="line-clamp-2 text-xl font-semibold leading-snug tracking-tight text-stone-900 sm:text-2xl">
-          {item.name}
-        </h3>
+      <div className="flex flex-1 flex-col p-5">
+        <p className="text-xs font-semibold text-green-800">{item.category || "カテゴリー未設定"}</p>
+        <h3 className="mt-2 line-clamp-2 text-lg font-semibold text-stone-900">{item.name}</h3>
 
-        <div className="mt-5">
-          <p className="text-[11px] font-semibold tracking-[0.22em] text-green-800">
-            この植物の魅力
+        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+          <div><dt className="text-stone-400">樹高</dt><dd className="font-medium text-stone-700">{item.tree_height || "—"}</dd></div>
+          <div><dt className="text-stone-400">樹形</dt><dd className="font-medium text-stone-700">{item.tree_shape || "—"}</dd></div>
+          <div><dt className="text-stone-400">鉢サイズ</dt><dd className="font-medium text-stone-700">{item.pot_size || "—"}</dd></div>
+        </dl>
+
+        <p className="mt-4 rounded-xl bg-green-50 px-3 py-2 text-sm font-medium text-green-900">
+          1ケース{item.irisu}鉢入り
+        </p>
+
+        <div className="mt-4 border-t border-stone-100 pt-4">
+          <p className="text-xs text-stone-400">販売価格（税抜）</p>
+          <p className="text-xl font-semibold text-stone-900">
+            {item.price === null ? "価格未設定" : `¥${item.price.toLocaleString("ja-JP")}`}
+            {item.price !== null && <span className="ml-1 text-xs font-normal text-stone-400">／ケース</span>}
           </p>
-
-          <p className="mt-3 line-clamp-3 text-sm leading-7 text-stone-500">
-            {attraction}
-          </p>
-        </div>
-
-        <div className="mt-auto pt-7">
-          <Link
-            href={`/platform/products/${item.id}`}
-            className="inline-flex items-center gap-3 border-b border-stone-400 pb-1 text-sm font-medium text-stone-700 transition group-hover:border-green-800 group-hover:text-green-800"
-          >
-            詳細を見る
-            <span
-              aria-hidden="true"
-              className="transition-transform duration-300 group-hover:translate-x-1"
-            >
-              →
-            </span>
-          </Link>
+          {!soldOut && (
+            <p className="mt-3 text-sm font-medium text-stone-700">
+              販売可能 {item.quantity === null ? "未設定" : `${item.quantity}ケース`}
+            </p>
+          )}
         </div>
       </div>
     </article>

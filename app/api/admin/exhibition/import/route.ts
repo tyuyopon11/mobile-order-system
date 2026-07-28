@@ -3,317 +3,225 @@ import * as XLSX from "xlsx";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-function getCellText(sheet: XLSX.WorkSheet, cell: string) {
-  const value = sheet[cell]?.v;
+const PRODUCT_HEADERS = [
+  "商品番号",
+  "商品名",
+  "カテゴリー",
+  "品目",
+  "品種",
+  "樹高",
+  "樹形",
+  "鉢サイズ",
+  "入数",
+  "数量（ケース数）",
+  "価格",
+  "産地",
+  "生産者",
+  "コメント",
+  "JFコード",
+] as const;
 
-  return value === undefined || value === null
-    ? ""
-    : String(value).trim();
+const HEADER_ALIASES: Partial<Record<(typeof PRODUCT_HEADERS)[number], readonly string[]>> = {
+  "数量（ケース数）": ["数量"],
+};
+
+function cellText(sheet: XLSX.WorkSheet, address: string) {
+  const value = sheet[address]?.v;
+  return value === undefined || value === null ? "" : String(value).trim();
 }
 
-function getCellNumber(sheet: XLSX.WorkSheet, cell: string) {
-  const value = sheet[cell]?.v;
-
-  if (value === undefined || value === null || value === "") {
-    return null;
-  }
-
-  const cleaned = String(value)
-    .replace(/,/g, "")
-    .replace(/¥/g, "")
-    .trim();
-
-  const number = Number(cleaned);
-
-  return Number.isNaN(number) ? null : number;
+function normalizeHeader(value: string) {
+  return value.normalize("NFKC").replace(/\s+/g, "");
 }
 
-function excelDateToDateString(value: unknown) {
-  if (!value) {
-    return null;
-  }
+function isCompatibleHeader(expected: (typeof PRODUCT_HEADERS)[number], actual: string) {
+  const accepted = [expected, ...(HEADER_ALIASES[expected] ?? [])];
+  const normalizedActual = normalizeHeader(actual);
+  return accepted.some((value) => normalizeHeader(value) === normalizedActual);
+}
 
-  if (value instanceof Date) {
-    return value.toISOString().slice(0, 10);
-  }
+function cellNumber(sheet: XLSX.WorkSheet, address: string) {
+  const value = sheet[address]?.v;
+  if (value === undefined || value === null || value === "") return null;
+  const parsed = Number(String(value).replace(/,/g, "").replace(/¥/g, "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
+function excelDate(value: unknown) {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
   if (typeof value === "number") {
     const parsed = XLSX.SSF.parse_date_code(value);
-
-    if (!parsed) {
-      return null;
-    }
-
-    const year = String(parsed.y);
-    const month = String(parsed.m).padStart(2, "0");
-    const day = String(parsed.d).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
+    if (!parsed) return null;
+    return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
   }
-
-  const text = String(value).trim();
-
-  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(text)) {
-    const [year, month, day] = text.split("/");
-
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(text)) {
-    const [year, month, day] = text.split("-");
-
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  return null;
+  const text = String(value).trim().replaceAll("/", "-");
+  return /^\d{4}-\d{1,2}-\d{1,2}$/.test(text)
+    ? text.split("-").map((part, index) => index === 0 ? part : part.padStart(2, "0")).join("-")
+    : null;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
-
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { error: "Excelファイルが選択されていません。" },
-        { status: 400 }
-      );
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "Excelファイルを選択してください。" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-
-    const workbook = XLSX.read(arrayBuffer, {
+    const workbook = XLSX.read(await file.arrayBuffer(), {
       type: "array",
       cellDates: true,
     });
-
     const settingSheet = workbook.Sheets["展示会設定"];
     const itemSheet = workbook.Sheets["商品リスト"];
 
-    if (!settingSheet) {
+    if (!settingSheet || !itemSheet) {
+      return NextResponse.json(
+        { error: "正式テンプレートの「展示会設定」「商品リスト」シートが必要です。" },
+        { status: 400 }
+      );
+    }
+
+    const actualHeaders = PRODUCT_HEADERS.map((_, index) =>
+      cellText(itemSheet, `${XLSX.utils.encode_col(index)}3`)
+    );
+    const mismatches = PRODUCT_HEADERS.flatMap((expected, index) => {
+      const actual = actualHeaders[index];
+      return isCompatibleHeader(expected, actual)
+        ? []
+        : [{ column: XLSX.utils.encode_col(index), expected, actual }];
+    });
+
+    if (mismatches.length > 0) {
+      const first = mismatches[0];
       return NextResponse.json(
         {
-          error: `展示会設定シートが見つかりません。検出シート：${workbook.SheetNames.join(
-            " / "
-          )}`,
+          error: `商品リスト3行目の列順が正式テンプレートと一致しません。列${first.column}は「${first.expected}」にしてください。`,
+          expectedHeaders: PRODUCT_HEADERS,
+          actualHeaders,
+          mismatches,
         },
         { status: 400 }
       );
     }
 
-    if (!itemSheet) {
+    const exhibitionName = cellText(settingSheet, "B4");
+    const shopName = cellText(settingSheet, "B8");
+    if (!exhibitionName || !shopName) {
       return NextResponse.json(
-        {
-          error: `商品リストシートが見つかりません。検出シート：${workbook.SheetNames.join(
-            " / "
-          )}`,
-        },
-        { status: 400 }
-      );
-    }
-
-    const exhibitionName = getCellText(settingSheet, "B4");
-    const startDate = excelDateToDateString(settingSheet["B5"]?.v);
-    const endDate = excelDateToDateString(settingSheet["B6"]?.v);
-    const exhibitionCategory = getCellText(settingSheet, "B7");
-    const shopName = getCellText(settingSheet, "B8");
-
-    if (!exhibitionName) {
-      const nearbyValues = ["A4", "B4", "C4", "A5", "B5", "A8", "B8"]
-        .map((cell) => `${cell}=${getCellText(settingSheet, cell) || "空欄"}`)
-        .join(" / ");
-
-      return NextResponse.json(
-        {
-          error: `展示会名が未入力です。検出内容：${nearbyValues}`,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!shopName) {
-      return NextResponse.json(
-        {
-          error: `ショップ名が未入力です。B8=${getCellText(
-            settingSheet,
-            "B8"
-          ) || "空欄"}`,
-        },
+        { error: "展示会名とショップ名は必須です。" },
         { status: 400 }
       );
     }
 
     const { data: shop, error: shopError } = await supabaseAdmin
       .from("shops")
-      .select("id, shop_name")
+      .select("id,shop_name")
       .eq("shop_name", shopName)
       .maybeSingle();
-
-    if (shopError) {
-      console.error("ショップ取得エラー:", shopError);
-
+    if (shopError || !shop) {
       return NextResponse.json(
-        { error: "ショップ情報の確認に失敗しました。" },
-        { status: 500 }
-      );
-    }
-
-    if (!shop) {
-      return NextResponse.json(
-        {
-          error: `ショップ「${shopName}」が登録されていません。ショップ名を確認してください。`,
-        },
+        { error: `ショップ「${shopName}」が登録されていません。` },
         { status: 400 }
       );
     }
 
-    const range = XLSX.utils.decode_range(
-      itemSheet["!ref"] ?? "A1:N1"
-    );
+    const range = XLSX.utils.decode_range(itemSheet["!ref"] ?? "A1:O1");
+    const rows: Record<string, unknown>[] = [];
 
-    const rows = [];
+    for (let row = 4; row <= range.e.r + 1; row += 1) {
+      const itemNo = cellNumber(itemSheet, `A${row}`);
+      const productName = cellText(itemSheet, `B${row}`);
+      if (itemNo === null && !productName) continue;
 
-    for (let row = 4; row <= range.e.r + 1; row++) {
-      const itemNo = getCellNumber(itemSheet, `A${row}`);
-      const productName = getCellText(itemSheet, `B${row}`);
+      const irisu = cellNumber(itemSheet, `I${row}`);
+      const quantity = cellNumber(itemSheet, `J${row}`);
+      const price = cellNumber(itemSheet, `K${row}`);
 
-      if (itemNo === null && !productName) {
-        continue;
+      if (itemNo === null || !Number.isInteger(itemNo) || itemNo < 1) {
+        return NextResponse.json({ error: `${row}行目の商品番号は1以上の整数で入力してください。` }, { status: 400 });
       }
-
       if (!productName) {
-        return NextResponse.json(
-          {
-            error: `${row}行目の商品名が未入力です。`,
-          },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: `${row}行目の商品名は必須です。` }, { status: 400 });
       }
-
-      const quantity = getCellNumber(itemSheet, `I${row}`);
-      const price = getCellNumber(itemSheet, `J${row}`);
-
-      if (quantity === null) {
-        return NextResponse.json(
-          {
-            error: `${row}行目の数量が未入力、または数値ではありません。`,
-          },
-          { status: 400 }
-        );
+      if (irisu === null || !Number.isInteger(irisu) || irisu < 1) {
+        return NextResponse.json({ error: `${row}行目の入数は1以上の整数で入力してください。` }, { status: 400 });
       }
-
-      if (price === null) {
-        return NextResponse.json(
-          {
-            error: `${row}行目の価格が未入力、または数値ではありません。`,
-          },
-          { status: 400 }
-        );
+      if (quantity === null || !Number.isInteger(quantity) || quantity < 0) {
+        return NextResponse.json({ error: `${row}行目の数量（ケース数）は0以上の整数で入力してください。` }, { status: 400 });
+      }
+      if (price === null || price < 0) {
+        return NextResponse.json({ error: `${row}行目の価格は0以上の数値で入力してください。` }, { status: 400 });
       }
 
       rows.push({
         item_no: itemNo,
         product_name: productName,
-        category: getCellText(itemSheet, `C${row}`),
-        item: getCellText(itemSheet, `D${row}`),
-        variety: getCellText(itemSheet, `E${row}`),
-        tree_height: getCellText(itemSheet, `F${row}`),
-        tree_shape: getCellText(itemSheet, `G${row}`),
-        pot_size: getCellText(itemSheet, `H${row}`),
+        category: cellText(itemSheet, `C${row}`),
+        item: cellText(itemSheet, `D${row}`),
+        variety: cellText(itemSheet, `E${row}`),
+        tree_height: cellText(itemSheet, `F${row}`),
+        tree_shape: cellText(itemSheet, `G${row}`),
+        pot_size: cellText(itemSheet, `H${row}`),
+        irisu,
         quantity,
         price,
-        origin: getCellText(itemSheet, `K${row}`),
-        producer: getCellText(itemSheet, `L${row}`),
-        comment: getCellText(itemSheet, `M${row}`),
-        jf_code: getCellText(itemSheet, `N${row}`) || null,
+        sales_unit: "case",
+        units_per_sales_unit: irisu,
+        origin: cellText(itemSheet, `L${row}`),
+        producer: cellText(itemSheet, `M${row}`),
+        comment: cellText(itemSheet, `N${row}`),
+        jf_code: cellText(itemSheet, `O${row}`) || null,
         staff: null,
-        status: "preparing",
+        status: quantity === 0 ? "sold" : "preparing",
         input_completed: false,
         shop_id: shop.id,
       });
     }
 
-    if (rows.length === 0) {
-      return NextResponse.json(
-        { error: "登録できる商品データがありません。" },
-        { status: 400 }
-      );
+    if (!rows.length) {
+      return NextResponse.json({ error: "取込対象の商品がありません。" }, { status: 400 });
     }
 
-    await supabaseAdmin
+    await supabaseAdmin.from("exhibitions").update({ is_active: false }).eq("is_active", true);
+    const { data: exhibition, error: exhibitionError } = await supabaseAdmin
       .from("exhibitions")
-      .update({ is_active: false })
-      .eq("is_active", true);
-
-    const { data: exhibition, error: exhibitionError } =
-      await supabaseAdmin
-        .from("exhibitions")
-        .insert({
-          name: exhibitionName,
-          start_date: startDate,
-          end_date: endDate,
-          category: exhibitionCategory,
-          is_active: true,
-        })
-        .select("id")
-        .single();
+      .insert({
+        name: exhibitionName,
+        start_date: excelDate(settingSheet["B5"]?.v),
+        end_date: excelDate(settingSheet["B6"]?.v),
+        category: cellText(settingSheet, "B7"),
+        is_active: true,
+      })
+      .select("id")
+      .single();
 
     if (exhibitionError || !exhibition) {
-      console.error("展示会登録エラー:", exhibitionError);
-
       return NextResponse.json(
-        {
-          error:
-            exhibitionError?.message ??
-            "展示会の登録に失敗しました。",
-        },
+        { error: exhibitionError?.message ?? "展示会を登録できませんでした。" },
         { status: 500 }
       );
     }
-
-    const insertRows = rows.map((row) => ({
-      ...row,
-      exhibition_id: exhibition.id,
-    }));
 
     const { error: itemsError } = await supabaseAdmin
       .from("exhibition_items")
-      .insert(insertRows);
-
+      .insert(rows.map((row) => ({ ...row, exhibition_id: exhibition.id })));
     if (itemsError) {
-      console.error("商品登録エラー:", itemsError);
-
-      await supabaseAdmin
-        .from("exhibitions")
-        .delete()
-        .eq("id", exhibition.id);
-
-      return NextResponse.json(
-        {
-          error:
-            itemsError.message ??
-            "商品の登録に失敗しました。",
-        },
-        { status: 500 }
-      );
+      await supabaseAdmin.from("exhibitions").delete().eq("id", exhibition.id);
+      return NextResponse.json({ error: itemsError.message }, { status: 500 });
     }
 
     return NextResponse.json({
-      message: "Lei Port商品データの取込が完了しました。",
+      message: "LeiPort_Import_Template_v1.1.xlsx の取込が完了しました。",
       exhibitionName,
       shopName: shop.shop_name,
-      itemCount: insertRows.length,
+      itemCount: rows.length,
     });
   } catch (error) {
-    console.error("Lei Port Excel取込エラー:", error);
-
+    console.error("[Lei Port] Excel import failed:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "取込中に予期しないエラーが発生しました。",
-      },
+      { error: error instanceof Error ? error.message : "取込中にエラーが発生しました。" },
       { status: 500 }
     );
   }

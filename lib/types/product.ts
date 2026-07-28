@@ -8,6 +8,10 @@ export type ProductShop = {
   id: string;
   shop_name: string;
   slug: string;
+  ordering_enabled: boolean;
+  accepts_tuesday: boolean;
+  accepts_saturday: boolean;
+  order_cutoff_hours: number;
 };
 
 export type Product = {
@@ -26,6 +30,9 @@ export type Product = {
 
   quantity: number | null;
   price: number | null;
+  irisu: number;
+  sales_unit: string;
+  units_per_sales_unit: number;
 
   origin: string | null;
   producer: string | null;

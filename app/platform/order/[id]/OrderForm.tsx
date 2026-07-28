@@ -7,12 +7,24 @@ import {
   createOrder,
   type CreateOrderInput,
 } from "../actions";
+import {
+  formatSalesUnitQuantity,
+  formatUnitsPerSalesUnit,
+  getSalesUnitLabel,
+} from "@/lib/products/sales-unit";
 
 type OrderFormProps = {
   productId: string;
   productName: string;
   unitPrice: number | null;
   availableQuantity: number | null;
+  salesUnit: string;
+  unitsPerSalesUnit: number;
+  allowedAuctionDates: string[];
+  defaultCompanyName: string;
+  defaultBuyerNumber: string;
+  defaultContactName: string;
+  defaultPhone: string;
   defaultEmail: string;
 };
 
@@ -32,6 +44,13 @@ export default function OrderForm({
   productName,
   unitPrice,
   availableQuantity,
+  salesUnit,
+  unitsPerSalesUnit,
+  allowedAuctionDates,
+  defaultCompanyName,
+  defaultBuyerNumber,
+  defaultContactName,
+  defaultPhone,
   defaultEmail,
 }: OrderFormProps) {
   const router = useRouter();
@@ -52,10 +71,10 @@ export default function OrderForm({
       : 1;
 
   const [values, setValues] = useState<FormValues>({
-    companyName: "",
-    buyerNumber: "",
-    contactName: "",
-    phone: "",
+    companyName: defaultCompanyName,
+    buyerNumber: defaultBuyerNumber,
+    contactName: defaultContactName,
+    phone: defaultPhone,
     email: defaultEmail,
     deliveryDate: "",
     quantity: 1,
@@ -191,12 +210,20 @@ export default function OrderForm({
             />
 
             <ConfirmRow
-              label="注文数量"
-              value={`${values.quantity}点`}
+              label="注文数"
+              value={formatSalesUnitQuantity(values.quantity, salesUnit)}
             />
 
             <ConfirmRow
-              label="注文金額"
+              label="入数・実数量"
+              value={`${formatUnitsPerSalesUnit(
+                unitsPerSalesUnit,
+                salesUnit
+              )}（合計${values.quantity * unitsPerSalesUnit}）`}
+            />
+
+            <ConfirmRow
+              label="注文金額（税抜）"
               value={
                 totalPrice === null
                   ? "価格未設定"
@@ -413,7 +440,7 @@ export default function OrderForm({
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field
-            label="注文数量"
+            label={`注文数（${getSalesUnitLabel(salesUnit)}単位）`}
             name="quantity"
             required
           >
@@ -440,10 +467,15 @@ export default function OrderForm({
                   key={quantity}
                   value={quantity}
                 >
-                  {quantity}点
+                  {formatSalesUnitQuantity(quantity, salesUnit)}
                 </option>
               ))}
             </select>
+            <p className="mt-2 text-xs leading-5 text-stone-500">
+              {formatUnitsPerSalesUnit(unitsPerSalesUnit, salesUnit)}
+              。選択中の実数量は
+              {values.quantity * unitsPerSalesUnit}です。
+            </p>
           </Field>
 
           <Field
@@ -451,11 +483,11 @@ export default function OrderForm({
             name="deliveryDate"
             required
           >
-            <input
+            <select
               id="deliveryDate"
               name="deliveryDate"
-              type="date"
               required
+              disabled={allowedAuctionDates.length === 0}
               value={values.deliveryDate}
               onChange={(event) =>
                 updateValue(
@@ -464,7 +496,22 @@ export default function OrderForm({
                 )
               }
               className={inputClassName}
-            />
+            >
+              <option value="">競り日を選択</option>
+              {allowedAuctionDates.map((date) => (
+                <option key={date} value={date}>
+                  {new Date(`${date}T00:00:00+09:00`).toLocaleDateString(
+                    "ja-JP",
+                    { month: "long", day: "numeric", weekday: "short" }
+                  )}
+                </option>
+              ))}
+            </select>
+            {allowedAuctionDates.length === 0 && (
+              <p role="alert" className="mt-2 text-sm font-medium text-amber-700">
+                現在選択できる競り日がありません。ショップの注文受付設定をご確認ください。
+              </p>
+            )}
           </Field>
         </div>
 
@@ -488,7 +535,7 @@ export default function OrderForm({
         <div className="rounded-2xl bg-stone-50 p-5">
           <div className="flex items-center justify-between gap-5">
             <span className="text-sm text-stone-500">
-              注文予定金額
+              注文予定金額（税抜）
             </span>
 
             <span className="text-xl font-semibold text-stone-900">

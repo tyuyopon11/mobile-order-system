@@ -11,7 +11,7 @@ export default function ConfirmSecureButton({ productName, price }: Props) {
       type="submit"
       onClick={(e) => {
         const ok = window.confirm(
-          `【${productName}】を確保します。\n\n価格：¥${Number(
+          `【${productName}】を確保します。\n\n価格（税抜）：¥${Number(
             price ?? 0
           ).toLocaleString()}\n\n確保後は他の買参人様から閲覧できなくなります。\n\nよろしいですか？`
         );

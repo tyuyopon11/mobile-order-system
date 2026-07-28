@@ -22,11 +22,7 @@ export default function LoginForm({
 
   return (
     <form action={formAction} className="mt-8 space-y-5">
-      <input
-        type="hidden"
-        name="next"
-        value={nextPath}
-      />
+      <input type="hidden" name="next" value={nextPath} />
 
       <div>
         <label

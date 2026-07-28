@@ -16,6 +16,10 @@ type ShopRow = {
   id: string;
   shop_name: string;
   slug: string;
+  ordering_enabled: boolean;
+  accepts_tuesday: boolean;
+  accepts_saturday: boolean;
+  order_cutoff_hours: number;
 };
 
 function sortImages(
@@ -76,6 +80,23 @@ function mapProduct(
 
     quantity: nullableNumber(item.quantity),
     price: nullableNumber(item.price),
+    irisu: Math.max(
+      1,
+      Math.trunc(
+        nullableNumber(item.irisu) ??
+          nullableNumber(item.units_per_sales_unit) ??
+          1
+      )
+    ),
+    sales_unit: "case",
+    units_per_sales_unit: Math.max(
+      1,
+      Math.trunc(
+        nullableNumber(item.irisu) ??
+          nullableNumber(item.units_per_sales_unit) ??
+          1
+      )
+    ),
 
     origin: nullableText(item.origin),
     producer: nullableText(item.producer),
@@ -93,6 +114,10 @@ function mapProduct(
         id: "",
         shop_name: "",
         slug: "",
+        ordering_enabled: false,
+        accepts_tuesday: false,
+        accepts_saturday: false,
+        order_cutoff_hours: 24,
       } satisfies ProductShop),
   };
 }
@@ -132,6 +157,9 @@ export async function getShopItems(
         pot_size,
         quantity,
         price,
+        irisu,
+        sales_unit,
+        units_per_sales_unit,
         origin,
         producer,
         staff,
@@ -148,6 +176,7 @@ export async function getShopItems(
       }
     )
     .eq("shop_id", shopId)
+    .eq("published", true)
     .order("item_no", {
       ascending: true,
     })
@@ -198,6 +227,9 @@ export async function getProduct(
         pot_size,
         quantity,
         price,
+        irisu,
+        sales_unit,
+        units_per_sales_unit,
         origin,
         producer,
         staff,
@@ -211,11 +243,16 @@ export async function getProduct(
         shops (
           id,
           shop_name,
-          slug
+          slug,
+          ordering_enabled,
+          accepts_tuesday,
+          accepts_saturday,
+          order_cutoff_hours
         )
       `
     )
     .eq("id", id)
+    .eq("published", true)
     .single();
 
   if (error || !data) {
@@ -245,6 +282,10 @@ export async function getProduct(
     id: String(shopRow.id),
     shop_name: shopRow.shop_name,
     slug: shopRow.slug,
+    ordering_enabled: shopRow.ordering_enabled,
+    accepts_tuesday: shopRow.accepts_tuesday,
+    accepts_saturday: shopRow.accepts_saturday,
+    order_cutoff_hours: shopRow.order_cutoff_hours,
   };
 
   return mapProduct(data, shop);

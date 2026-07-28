@@ -1,6 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  auctionCutoffAt,
+  auctionWeekday,
+} from "@/lib/orders/auction-dates";
 
 export type CreateOrderInput = {
   productId: string;
@@ -219,7 +223,19 @@ export async function createOrder(
       error: productError,
     } = await supabase
       .from("exhibition_items")
-      .select("id, quantity")
+      .select(`
+        id,
+        quantity,
+        irisu,
+        shop_id,
+        shops (
+          contact_email,
+          ordering_enabled,
+          accepts_tuesday,
+          accepts_saturday,
+          order_cutoff_hours
+        )
+      `)
       .eq("id", productId)
       .single();
 
@@ -240,6 +256,84 @@ export async function createOrder(
       product.quantity === null
         ? null
         : Number(product.quantity);
+    const salesUnit = "case";
+    const unitsPerSalesUnit = Math.max(
+      1,
+      Math.trunc(Number(product.irisu ?? 1))
+    );
+
+    const shopRelation = Array.isArray(product.shops)
+      ? product.shops[0]
+      : product.shops;
+    const auctionDate = new Date(`${deliveryDate}T00:00:00+09:00`);
+    const auctionDay = auctionWeekday(deliveryDate);
+    const acceptsAuctionDay =
+      (auctionDay === 2 && shopRelation?.accepts_tuesday) ||
+      (auctionDay === 6 && shopRelation?.accepts_saturday);
+
+    const {
+      data: configuredAuctionDate,
+      error: configuredAuctionDateError,
+    } = await supabase
+      .from("auction_dates")
+      .select("auction_date")
+      .eq("auction_date", deliveryDate)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    const auctionDatesTableMissing =
+      configuredAuctionDateError?.code === "42P01" ||
+      configuredAuctionDateError?.message
+        .toLowerCase()
+        .includes("auction_dates");
+
+    if (configuredAuctionDateError && !auctionDatesTableMissing) {
+      console.error(
+        "Auction date validation error:",
+        configuredAuctionDateError
+      );
+      return {
+        success: false,
+        message: "競り日情報を確認できませんでした。時間をおいて再度お試しください。",
+      };
+    }
+
+    if (
+      !shopRelation?.ordering_enabled ||
+      !deliveryDate ||
+      Number.isNaN(auctionDate.getTime()) ||
+      !acceptsAuctionDay ||
+      (!auctionDatesTableMissing && !configuredAuctionDate)
+    ) {
+      return {
+        success: false,
+        message: "このショップが受付している競り日（火曜・土曜）を選択してください。",
+      };
+    }
+
+    const cutoffAt = auctionCutoffAt(
+      deliveryDate,
+      Number(shopRelation.order_cutoff_hours ?? 24)
+    );
+    if (Date.now() >= cutoffAt.getTime()) {
+      return {
+        success: false,
+        message: "この競り日の注文受付は締め切りました。",
+      };
+    }
+
+    const { data: orderNumber, error: orderNumberError } =
+      await supabase.rpc("next_lei_port_order_number", {
+        p_auction_date: deliveryDate,
+      });
+
+    if (orderNumberError || !orderNumber) {
+      console.error("Order number generation error:", orderNumberError);
+      return {
+        success: false,
+        message: "注文番号を発行できませんでした。時間をおいて再度お試しください。",
+      };
+    }
 
     if (
       availableQuantity !== null &&
@@ -265,11 +359,17 @@ export async function createOrder(
           contact_name: contactName,
           contact_tel: phone,
           quantity: input.quantity,
+          irisu: unitsPerSalesUnit,
+          sales_unit: salesUnit,
+          units_per_sales_unit: unitsPerSalesUnit,
+          total_units: input.quantity * unitsPerSalesUnit,
           status: "secured",
           cancelled: false,
           email,
           note: note || null,
-          delivery_date: deliveryDate,
+          auction_date: deliveryDate,
+          order_number: orderNumber,
+          delivery_date: null,
 
           /*
            * 既存の展示販売用カラム。
@@ -279,7 +379,7 @@ export async function createOrder(
           branch: null,
           contact: null,
         })
-        .select("id")
+        .select("id,order_number")
         .single();
 
     if (insertError || !order) {
@@ -292,9 +392,22 @@ export async function createOrder(
       };
     }
 
+    if (shopRelation?.contact_email) {
+      const { error: notificationError } = await supabase
+        .from("order_email_notifications")
+        .insert({
+          order_id: order.id,
+          recipient: shopRelation.contact_email,
+          status: "pending",
+        });
+      if (notificationError) {
+        console.error("Order email queue insert error:", notificationError);
+      }
+    }
+
     return {
       success: true,
-      orderId: String(order.id),
+      orderId: order.order_number ?? String(order.id),
     };
   } catch (error) {
     console.error("Create order unexpected error:", error);

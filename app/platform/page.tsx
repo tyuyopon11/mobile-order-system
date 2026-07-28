@@ -93,6 +93,7 @@ function getShopBranding(shop: Shop): ShopBranding {
 
 export default async function PlatformPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
     .from("shops")
@@ -101,6 +102,18 @@ export default async function PlatformPage() {
     .order("display_order", { ascending: true });
 
   const shops = (data ?? []) as Shop[];
+  const { data: favoriteRows } = user
+    ? await supabase
+        .from("favorite_shops")
+        .select("shop_id")
+        .eq("user_id", user.id)
+    : { data: [] };
+  const favoriteIds = new Set(
+    (favoriteRows ?? []).map((row) => String(row.shop_id))
+  );
+  const favoriteShops = shops.filter((shop) =>
+    favoriteIds.has(String(shop.id))
+  );
 
   if (error) {
     return (
@@ -121,6 +134,24 @@ export default async function PlatformPage() {
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-5 sm:px-5 sm:py-8">
       <div className="mx-auto max-w-6xl">
+        {favoriteShops.length > 0 && (
+          <section className="mb-5 rounded-2xl border border-green-100 bg-green-50/70 p-4">
+            <p className="text-xs font-bold tracking-[0.16em] text-green-800">
+              お気に入りショップ
+            </p>
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+              {favoriteShops.map((shop) => (
+                <Link
+                  key={shop.id}
+                  href={`/platform/shops/${shop.slug}`}
+                  className="shrink-0 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700"
+                >
+                  {shop.shop_name}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
         {/* Hero */}
         <section className="relative mb-12 overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] sm:mb-16">
           <div

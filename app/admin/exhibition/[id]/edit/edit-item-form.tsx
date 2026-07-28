@@ -248,7 +248,7 @@ export default function EditItemForm({ item }: Props) {
               </label>
 
               <label className={labelClassName}>
-                販売価格
+                販売価格（税抜）
                 <input
                   type="number"
                   name="price"

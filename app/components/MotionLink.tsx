@@ -1,19 +1,16 @@
 "use client";
 
-import Link, { type LinkProps } from "next/link";
+import Link from "next/link";
 import { motion } from "motion/react";
 import type {
-  AnchorHTMLAttributes,
+  ComponentPropsWithoutRef,
   ReactNode,
 } from "react";
 
 const AnimatedLink = motion.create(Link);
 
-type MotionLinkProps = LinkProps &
-  Omit<
-    AnchorHTMLAttributes<HTMLAnchorElement>,
-    keyof LinkProps
-  > & {
+type MotionLinkProps =
+  ComponentPropsWithoutRef<typeof AnimatedLink> & {
     children: ReactNode;
   };
 

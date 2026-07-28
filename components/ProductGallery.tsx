@@ -91,8 +91,8 @@ export default function ProductGallery({
                 🌿
               </div>
 
-              <p className="mt-5 text-lg font-bold text-gray-700">
-                画像準備中
+              <p className="mt-5 text-lg font-semibold text-gray-700">
+                商品画像準備中
               </p>
 
               <p className="mt-2 text-xs font-bold uppercase tracking-widest text-green-700">

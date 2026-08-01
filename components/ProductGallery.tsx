@@ -95,6 +95,10 @@ export default function ProductGallery({
                 商品画像準備中
               </p>
 
+              <p className="mt-2 text-sm text-gray-500">
+                商品画像は今後追加予定です
+              </p>
+
               <p className="mt-2 text-xs font-bold uppercase tracking-widest text-green-700">
                 Lei Port Marketplace
               </p>

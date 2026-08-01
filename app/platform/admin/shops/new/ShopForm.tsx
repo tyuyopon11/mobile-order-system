@@ -290,6 +290,16 @@ export default function ShopForm() {
           </label>
           <label className="flex cursor-pointer items-center gap-3 text-sm">
             <input
+              name="showOnPublicSite"
+              type="checkbox"
+              defaultChecked
+              disabled={isPending}
+              className="h-4 w-4 accent-green-800"
+            />
+            一般サイトに掲載する
+          </label>
+          <label className="flex cursor-pointer items-center gap-3 text-sm">
+            <input
               name="isFeatured"
               type="checkbox"
               disabled={isPending}
@@ -298,6 +308,9 @@ export default function ShopForm() {
             おすすめに表示する
           </label>
         </div>
+        <p className="mt-2 text-xs leading-6 text-stone-500 sm:col-span-2">
+          一般掲載をOFFにすると、TOP・Marketplace・商品購入導線から完全に非表示になります。Admin・Vendor Portalでは引き続き利用できます。
+        </p>
       </div>
 
       <div className="flex flex-col-reverse gap-3 border-t border-stone-100 pt-6 sm:flex-row sm:justify-end">

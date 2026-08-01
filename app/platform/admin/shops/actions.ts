@@ -103,6 +103,7 @@ export async function createShop(
   const displayOrderText = String(formData.get("displayOrder") ?? "0").trim();
   const displayOrder = Number(displayOrderText);
   const published = formData.get("published") === "on";
+  const showOnPublicSite = formData.get("showOnPublicSite") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   const fieldErrors: CreateShopFieldErrors = {};
 
@@ -194,6 +195,7 @@ export async function createShop(
     display_order: displayOrder,
     published,
     published_at: published ? now : null,
+    show_on_public_site: showOnPublicSite,
     is_featured: isFeatured,
     updated_by: access.platformUser.id,
   });
@@ -261,6 +263,7 @@ export async function updateShop(
   const displayOrderText = String(formData.get("displayOrder") ?? "0").trim();
   const displayOrder = Number(displayOrderText);
   const published = formData.get("published") === "on";
+  const showOnPublicSite = formData.get("showOnPublicSite") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   const fieldErrors: CreateShopFieldErrors = {};
 
@@ -384,6 +387,7 @@ export async function updateShop(
       display_order: displayOrder,
       published,
       published_at: publishedAt,
+      show_on_public_site: showOnPublicSite,
       is_featured: isFeatured,
       updated_at: now,
       updated_by: access.platformUser.id,

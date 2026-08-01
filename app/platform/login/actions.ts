@@ -14,6 +14,7 @@ type ApprovalStatus = "pending" | "approved" | "rejected";
 type PlatformUserAccess = {
   approval_status: ApprovalStatus;
   is_active: boolean;
+  role: string;
 };
 
 function getSafeRedirectPath(value: FormDataEntryValue | null): string {
@@ -66,7 +67,7 @@ export async function login(
   const { data: platformUser, error: accessError } =
     await supabase
       .from("platform_users")
-      .select("approval_status, is_active")
+      .select("approval_status, is_active, role")
       .eq("auth_user_id", signInData.user.id)
       .maybeSingle<PlatformUserAccess>();
 
@@ -121,6 +122,8 @@ export async function login(
   }
 
   revalidatePath("/", "layout");
+  if (platformUser.role === "shop") redirect("/platform/shop");
+  if (platformUser.role === "admin" && nextPath === "/platform") redirect("/platform/admin");
   redirect(nextPath);
 }
 

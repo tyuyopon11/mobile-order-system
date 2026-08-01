@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import ProductGallery from "@/components/ProductGallery";
 import ProductInfo from "@/components/ProductInfo";
@@ -14,10 +15,14 @@ type Props = {
 
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
-  const product = await getProduct(id);
+  const product = await getProduct(id).catch(() => null);
+
+  if (!product) {
+    notFound();
+  }
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef]">
+    <main className="min-h-screen bg-[#f4f0e8] text-[#25342c]">
       <div className="mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10">
         <div className="mb-7">
           <Link

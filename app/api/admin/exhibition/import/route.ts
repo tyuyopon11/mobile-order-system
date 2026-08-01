@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { canManageShop } from "@/lib/auth/shop-access";
 
 const PRODUCT_HEADERS = [
   "商品番号",
@@ -124,6 +125,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: `ショップ「${shopName}」が登録されていません。` },
         { status: 400 }
+      );
+    }
+
+    const manager = await canManageShop(shop.id);
+    if (!manager) {
+      return NextResponse.json(
+        { error: "このショップの商品を取り込む権限がありません。" },
+        { status: 403 }
       );
     }
 

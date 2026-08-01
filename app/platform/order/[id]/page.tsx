@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getProduct } from "@/lib/services/product";
@@ -113,7 +113,11 @@ export default async function OrderPage({
     );
   }
 
-  const product = await getProduct(id);
+  const product = await getProduct(id).catch(() => null);
+
+  if (!product) {
+    notFound();
+  }
   const { data: auctionDateRows, error: auctionDatesError } = await supabase
     .from("auction_dates")
     .select("auction_date")
@@ -151,7 +155,7 @@ export default async function OrderPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] px-5 py-6 sm:px-8 sm:py-10">
+    <main className="min-h-screen bg-[#f4f0e8] px-5 py-6 text-[#25342c] sm:px-8 sm:py-10">
       <div className="mx-auto max-w-6xl">
         <div className="mb-7">
           <Link
@@ -168,7 +172,7 @@ export default async function OrderPage({
             ORDER
           </p>
 
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+          <h1 className="mt-3 font-serif text-3xl tracking-tight text-[#26382f] sm:text-4xl">
             購入手続き
           </h1>
 

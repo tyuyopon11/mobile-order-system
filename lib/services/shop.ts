@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { SHOP_PUBLICATION_COLUMN } from "@/lib/shops/publication";
 
 export type ShopType =
   | "market"
@@ -20,6 +21,7 @@ export type Shop = {
   short_description: string | null;
   display_order: number;
   published: boolean;
+  show_on_public_site: boolean;
   published_at: string | null;
   is_featured: boolean;
   shop_type: ShopType | null;
@@ -49,6 +51,7 @@ const SHOP_COLUMNS = [
   "short_description",
   "display_order",
   "published",
+  "show_on_public_site",
   "published_at",
   "is_featured",
   "shop_type",
@@ -68,21 +71,22 @@ const SHOP_COLUMNS = [
   "announcement",
 ].join(",");
 
-export async function getShop(slug: string): Promise<Shop> {
+export async function getShop(slug: string): Promise<Shop | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("shops")
     .select(SHOP_COLUMNS)
     .eq("slug", slug)
-    .eq("published", true)
-    .single();
+    .eq(SHOP_PUBLICATION_COLUMN, true)
+    .eq("show_on_public_site", true)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data as unknown as Shop;
+  return data as unknown as Shop | null;
 }
 
 export async function getShops(): Promise<Shop[]> {

@@ -34,6 +34,7 @@ export default function ProductCard({ item }: ProductCardProps) {
           <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-[#f4f5ef] to-[#e7ebe2] px-6 text-center">
             <span className="text-4xl text-green-800/70" aria-hidden="true">🌿</span>
             <span className="mt-4 text-sm font-medium text-stone-600">商品画像準備中</span>
+            <span className="mt-1 text-xs text-stone-500">今後追加予定です</span>
             <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-green-800">
               Lei Port Marketplace
             </span>

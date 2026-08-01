@@ -98,7 +98,7 @@ export default async function ShopPage({
     `/platform/shops/${shop.slug}?page=${page}`;
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef]">
+    <main className="min-h-screen bg-[#f4f0e8] text-[#25342c]">
       <div className="mx-auto max-w-[1440px] px-5 py-6 sm:px-8 sm:py-8 lg:px-12">
         <div className="mb-6">
           <Link
@@ -110,7 +110,7 @@ export default async function ShopPage({
           </Link>
         </div>
 
-        <section className="relative overflow-hidden rounded-[2rem] border border-stone-200/80 bg-white shadow-[0_18px_60px_rgba(54,65,48,0.08)]">
+        <section className="relative overflow-hidden border-y border-[#26382f]/15 bg-white/35">
           {shop.banner_url && (
             <>
               <Image
@@ -167,7 +167,7 @@ export default async function ShopPage({
               )}
 
               <h1
-                className={`mt-8 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl ${
+                className={`mt-8 font-serif text-3xl tracking-tight sm:text-4xl lg:text-5xl ${
                   shop.banner_url
                     ? "text-white drop-shadow-md"
                     : "text-stone-900"
@@ -221,7 +221,7 @@ export default async function ShopPage({
                 COLLECTION
               </p>
 
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+              <h2 className="mt-3 font-serif text-3xl tracking-tight text-[#26382f] sm:text-4xl">
                 {brand.collectionTitle}
               </h2>
 

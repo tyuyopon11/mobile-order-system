@@ -1,142 +1,23 @@
-"use client";
+import HomeClient, { type HomeShop } from "./HomeClient";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isShopPublished } from "@/lib/shops/publication";
 
-import { motion } from "motion/react";
+export const dynamic = "force-dynamic";
 
-import ConceptNumber from "./components/ConceptNumber";
-import Footer from "./components/Footer";
-import Hero from "./components/Hero";
-import MotionLink from "./components/MotionLink";
-import SectionTitle from "./components/SectionTitle";
-import ShopCard from "./components/ShopCard";
-import {
-  createDelayTransition,
-  fadeUp,
-  viewportOnce,
-} from "./components/lib/animations";
+export default async function HomePage() {
+  const { data } = await supabaseAdmin
+    .from("shops")
+    .select("shop_name,slug,short_description,description,shop_type,published,show_on_public_site")
+    .eq("show_on_public_site", true)
+    .order("display_order", { ascending: true });
 
-const shops = [
-  {
-    name: "高島屋植物園",
-    category: "SELECTED PLANTS",
-    description:
-      "大型観葉植物や特殊樹形を中心に、一鉢ごとの個性を楽しめる植物をセレクト。",
-    href: "/platform/shops/takashimaya",
-    status: "OPEN" as const,
-  },
-  {
-    name: "園芸部展示販売",
-    category: "GARDEN EXHIBITION",
-    description:
-      "季節の鉢花や観葉植物を、展示会形式で提案するBtoB販売ショップ。",
-    href: "/platform",
-    status: "COMING SOON" as const,
-  },
-  {
-    name: "切花部展示販売",
-    category: "FLOWER EXHIBITION",
-    description:
-      "産地と買参人をつなぎ、新しい切花の販売機会を生み出すショップ。",
-    href: "/platform",
-    status: "COMING SOON" as const,
-  },
-];
+  const shops: HomeShop[] = (data ?? []).map((shop) => ({
+    name: shop.shop_name,
+    category: String(shop.shop_type ?? "MARKETPLACE").replaceAll("_", " ").toUpperCase(),
+    description: shop.short_description || shop.description || "Lei Port Marketplaceのショップです。",
+    href: `/platform/shops/${shop.slug}`,
+    status: isShopPublished(shop) ? "OPEN" : "COMING SOON",
+  }));
 
-export default function HomePage() {
-  return (
-    <main className="min-h-screen overflow-hidden bg-[#f4f0e8] text-[#25342c]">
-      <Hero />
-
-      {/* CONCEPT */}
-      <section className="px-6 py-24 md:px-12 md:py-32 lg:px-20">
-        <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
-          <SectionTitle
-            eyebrow="OUR CONCEPT"
-            title={
-              <>
-                商流をつなぎ、
-                <br />
-                価値を育てる。
-              </>
-            }
-          />
-
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={viewportOnce}
-            transition={createDelayTransition(0.15)}
-            className="flex items-end"
-          >
-            <div className="max-w-2xl">
-              <p className="text-lg leading-9 text-[#536159]">
-                Lei Portは、単なる販売サイトではありません。
-                生産者、市場、仲卸、買参人、法人が持つ価値をひとつの場所につなぎ、
-                新しい販売機会と継続的なBusinessを生み出すためのプラットフォームです。
-              </p>
-
-              <div className="mt-10 grid grid-cols-3 gap-6 border-t border-[#26382f]/15 pt-8">
-                <ConceptNumber
-                  number="01"
-                  label="CONNECT"
-                  delay={0}
-                />
-
-                <ConceptNumber
-                  number="02"
-                  label="GROW"
-                  delay={0.1}
-                />
-
-                <ConceptNumber
-                  number="03"
-                  label="EXPAND"
-                  delay={0.2}
-                />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* SHOPS */}
-      <section className="border-y border-[#26382f]/10 bg-[#ebe5da] px-6 py-24 md:px-12 md:py-32 lg:px-20">
-        <div className="mx-auto max-w-7xl">
-          <SectionTitle
-            eyebrow="SHOPS"
-            title="Marketplace"
-            variant="shops"
-            action={
-              <MotionLink
-                href="/platform"
-                className="group inline-flex items-center gap-4 text-sm tracking-[0.16em] text-[#26382f]"
-              >
-                すべてのショップを見る
-
-                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1.5">
-                  →
-                </span>
-              </MotionLink>
-            }
-          />
-
-          <div className="mt-14 divide-y divide-[#26382f]/15 border-y border-[#26382f]/15">
-            {shops.map((shop, index) => (
-              <ShopCard
-                key={shop.name}
-                index={index}
-                name={shop.name}
-                category={shop.category}
-                description={shop.description}
-                href={shop.href}
-                status={shop.status}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <Footer />
-    </main>
-  );
+  return <HomeClient shops={shops} />;
 }

@@ -27,6 +27,21 @@ export async function toggleFavoriteShop(shopId: string) {
     return { favorite: false, error: null };
   }
 
+  const { data: publicShop, error: shopError } = await supabase
+    .from("shops")
+    .select("id")
+    .eq("id", shopId)
+    .eq("published", true)
+    .eq("show_on_public_site", true)
+    .maybeSingle();
+
+  if (shopError || !publicShop) {
+    return {
+      favorite: false,
+      error: "このショップは現在公開されていません。",
+    };
+  }
+
   const { error } = await supabase
     .from("favorite_shops")
     .insert({ user_id: user.id, shop_id: shopId });

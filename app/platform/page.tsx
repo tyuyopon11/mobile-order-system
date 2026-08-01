@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import BotanicalDecoration from "@/app/components/BotanicalDecoration";
 import { createClient } from "@/lib/supabase/server";
+import { SHOP_PUBLICATION_COLUMN } from "@/lib/shops/publication";
 
 type Shop = {
   id: string | number;
@@ -98,7 +100,8 @@ export default async function PlatformPage() {
   const { data, error } = await supabase
     .from("shops")
     .select("id, slug, shop_name, description, logo_url")
-    .eq("published", true)
+    .eq(SHOP_PUBLICATION_COLUMN, true)
+    .eq("show_on_public_site", true)
     .order("display_order", { ascending: true });
 
   const shops = (data ?? []) as Shop[];
@@ -117,7 +120,7 @@ export default async function PlatformPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen bg-stone-50 px-5 py-8">
+      <main className="min-h-screen bg-[#f4f0e8] px-5 py-8 text-[#25342c]">
         <div className="mx-auto max-w-5xl rounded-3xl border border-red-100 bg-red-50 p-6 shadow-sm">
           <h1 className="text-2xl font-bold text-red-700">
             ショップの取得に失敗しました
@@ -132,10 +135,36 @@ export default async function PlatformPage() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-5 sm:px-5 sm:py-8">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-screen overflow-hidden bg-[#f4f0e8] text-[#25342c]">
+      <section className="relative border-b border-[#26382f]/15 px-5 py-16 sm:px-8 sm:py-24 lg:px-12 lg:py-28">
+        <BotanicalDecoration />
+        <div className="relative mx-auto max-w-6xl">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] text-[#536159] transition hover:text-[#26382f]"
+          >
+            <span aria-hidden="true">←</span>
+            LEI PORT
+          </Link>
+          <p className="mt-16 text-xs font-medium tracking-[0.38em] text-[#66746c] sm:text-sm">
+            BtoB MARKETPLACE
+          </p>
+          <h1 className="mt-5 max-w-5xl font-serif text-[clamp(3rem,8vw,7rem)] leading-[0.92] tracking-[-0.05em] text-[#26382f]">
+            Lei Port Marketplace
+          </h1>
+          <div className="mt-9 h-px w-24 bg-[#26382f]/40" />
+          <p className="mt-7 font-serif text-2xl leading-relaxed text-[#26382f] sm:text-3xl">
+            植物の価値を、もっと伝わる価値へ。
+          </p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#536159] sm:text-base">
+            東京フラワーポートが運営する植物流通プラットフォーム。
+          </p>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
         {favoriteShops.length > 0 && (
-          <section className="mb-5 rounded-2xl border border-green-100 bg-green-50/70 p-4">
+          <section className="mb-14 border-y border-[#26382f]/15 py-5 sm:mb-20">
             <p className="text-xs font-bold tracking-[0.16em] text-green-800">
               お気に入りショップ
             </p>
@@ -144,7 +173,7 @@ export default async function PlatformPage() {
                 <Link
                   key={shop.id}
                   href={`/platform/shops/${shop.slug}`}
-                  className="shrink-0 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700"
+                  className="shrink-0 border border-[#26382f]/25 bg-white/45 px-4 py-2 text-sm font-semibold text-[#26382f] transition hover:bg-white/80"
                 >
                   {shop.shop_name}
                 </Link>
@@ -152,74 +181,19 @@ export default async function PlatformPage() {
             </div>
           </section>
         )}
-        {/* Hero */}
-        <section className="relative mb-12 overflow-hidden rounded-[2rem] border border-stone-200 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] sm:mb-16">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-contain bg-center bg-no-repeat"
-            style={{
-              backgroundImage:
-                "url('/images/hero/hero-botanical-bg.png')",
-            }}
-          />
-
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-white/20"
-          />
-
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-white/20"
-          />
-
-          <div className="relative z-10 px-6 py-14 sm:px-12 sm:py-20 lg:py-24">
-            <div className="mx-auto max-w-4xl text-center">
-              <div className="flex items-center justify-center gap-2.5">
-                <img
-                  src="/logos/tfp-logo.png"
-                  alt=""
-                  aria-hidden="true"
-                  className="h-10 w-10 shrink-0 object-contain sm:h-11 sm:w-11"
-                />
-
-                <p className="text-sm font-bold tracking-[0.18em] text-gray-700 sm:text-base sm:tracking-[0.2em]">
-                  Tokyo Flower Port
-                </p>
-              </div>
-
-              <p className="mt-8 text-xs font-bold tracking-[0.22em] text-green-700 sm:text-sm">
-                BtoB Marketplace
-              </p>
-
-              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-                Lei Port Marketplace Ver.1.1
-              </h1>
-
-              <p className="mt-7 text-2xl font-bold leading-relaxed text-gray-800 sm:text-3xl">
-                植物の価値を、
-                <br className="sm:hidden" />
-                もっと伝わる価値へ。
-              </p>
-
-              <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
-                東京フラワーポートが運営する植物流通プラットフォーム。
-              </p>
-            </div>
-          </div>
-        </section>
-
         {/* Shop introduction */}
-        <section className="mb-7 text-center sm:mb-9">
-          <p className="text-xs font-bold tracking-[0.22em] text-green-700 sm:text-sm">
+        <section className="mb-10 border-b border-[#26382f]/15 pb-8 sm:mb-12 sm:flex sm:items-end sm:justify-between sm:text-left">
+          <div>
+          <p className="text-xs font-medium tracking-[0.3em] text-[#66746c] sm:text-sm">
             OUR SHOPS
           </p>
 
-          <h2 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h2 className="mt-3 font-serif text-3xl tracking-tight text-[#26382f] sm:text-4xl">
             ショップを選ぶ
           </h2>
+          </div>
 
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-gray-600 sm:text-base">
+          <p className="mt-5 max-w-xl text-sm leading-7 text-[#536159] sm:mt-0 sm:text-right sm:text-base">
             それぞれの専門性を持つショップから、
             <br className="hidden sm:block" />
             あなたに合った植物との出会いをお楽しみください。
@@ -236,7 +210,7 @@ export default async function PlatformPage() {
                 <Link
                   key={shop.id}
                   href={`/platform/shops/${shop.slug}`}
-                  className={`group relative flex min-h-full flex-col overflow-hidden rounded-[2rem] border bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_18px_45px_rgba(0,0,0,0.10)] ${branding.accentClass}`}
+                  className={`group relative flex min-h-full flex-col overflow-hidden rounded-xl border bg-white/75 shadow-[0_8px_30px_rgba(38,56,47,0.04)] transition duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_18px_45px_rgba(38,56,47,0.08)] ${branding.accentClass}`}
                 >
                   <div
                     aria-hidden="true"
@@ -276,7 +250,7 @@ export default async function PlatformPage() {
                     </div>
 
                     <div className="mt-7 text-center">
-                      <h3 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                      <h3 className="font-serif text-2xl tracking-tight text-[#26382f] sm:text-3xl">
                         {shop.shop_name}
                       </h3>
 
@@ -343,7 +317,7 @@ export default async function PlatformPage() {
           </section>
         )}
 
-        <footer className="mt-14 border-t border-stone-200 py-8 text-center sm:mt-20">
+        <footer className="mt-14 border-t border-[#26382f]/15 py-8 text-center sm:mt-20">
           <p className="text-xs tracking-[0.12em] text-gray-500">
             Tokyo Flower Port
           </p>

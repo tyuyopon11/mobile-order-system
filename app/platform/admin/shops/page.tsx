@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getShops, type Shop, type ShopType } from "@/lib/services/shop";
 
 import ShopToggleButton from "./ShopToggleButton";
+import { openAdminShop } from "@/app/platform/shop/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -204,6 +205,12 @@ export default async function AdminShopsPage() {
                   </div>
 
                   <div className="flex shrink-0 flex-wrap items-start gap-2 sm:pl-20 xl:pl-0">
+                    <form action={openAdminShop}>
+                      <input type="hidden" name="shopId" value={shop.id} />
+                      <button className="rounded-xl bg-green-800 px-4 py-2 text-xs font-medium text-white hover:bg-green-900">
+                        ショップ管理画面を開く
+                      </button>
+                    </form>
                     <ShopToggleButton
                       shopId={shop.id}
                       field="published"

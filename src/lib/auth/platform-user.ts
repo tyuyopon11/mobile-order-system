@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 export type PlatformUserRole =
   | "admin"
   | "buyer"
+  | "shop"
   | "shop_admin"
   | "producer"
   | "vendor"
@@ -22,6 +23,7 @@ export type PlatformUser = {
   buyer_no: string | null;
   branch_no: string | null;
   phone: string | null;
+  shop_id: string | null;
   role: PlatformUserRole;
   approval_status: PlatformApprovalStatus;
   is_active: boolean;
@@ -59,6 +61,7 @@ const PLATFORM_USER_COLUMNS = [
   "buyer_no",
   "branch_no",
   "phone",
+  "shop_id",
   "role",
   "approval_status",
   "is_active",
@@ -180,4 +183,8 @@ export function isApprovedPlatformAdmin(
     access.state === "approved" &&
     access.platformUser?.role === "admin"
   );
+}
+
+export function isApprovedShopUser(access: PlatformAccessResult): boolean {
+  return access.state === "approved" && access.platformUser?.role === "shop";
 }

@@ -54,6 +54,20 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
+  // Mission24初期版で /platform/shop 限定だった管理者ショップCookieを、
+  // CSV APIにも届くルートCookieへ自動移行する。
+  if (request.nextUrl.pathname.startsWith("/platform/shop")) {
+    const selectedShopId = request.cookies.get("lei_port_admin_shop")?.value;
+    if (selectedShopId) {
+      supabaseResponse.cookies.set("lei_port_admin_shop", selectedShopId, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+      });
+    }
+  }
+
   return supabaseResponse;
 }
 
@@ -61,5 +75,6 @@ export const config = {
   matcher: [
     "/platform/order/:path*",
     "/platform/mypage/:path*",
+    "/platform/shop/:path*",
   ],
 };

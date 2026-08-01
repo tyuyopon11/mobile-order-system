@@ -6,7 +6,11 @@ import BotanicalDecoration from "./BotanicalDecoration";
 import MotionLink from "./MotionLink";
 import { premiumEase } from "./lib/animations";
 
-export default function Hero() {
+export default function Hero({
+  featuredShopHref,
+}: {
+  featuredShopHref?: string;
+}) {
   return (
     <section className="relative flex min-h-[92vh] items-center overflow-hidden border-b border-[#25342c]/10 px-6 py-20 md:px-12 lg:px-20">
       <BotanicalDecoration />
@@ -159,19 +163,25 @@ export default function Hero() {
               </span>
             </MotionLink>
 
-            <MotionLink
-              href="/platform/shops/takashimaya"
-              className="group inline-flex min-h-14 items-center justify-center gap-5 border border-[#26382f]/30 px-8 text-sm font-medium tracking-[0.16em] text-[#26382f] transition-colors duration-300 hover:border-[#26382f] hover:bg-white/40"
-            >
-              <span>高島屋植物園を見る</span>
-
-              <span
-                aria-hidden="true"
-                className="inline-block transition-transform duration-300 group-hover:translate-x-1.5"
+            {featuredShopHref ? (
+              <MotionLink
+                href={featuredShopHref}
+                className="group inline-flex min-h-14 items-center justify-center gap-5 border border-[#26382f]/30 px-8 text-sm font-medium tracking-[0.16em] text-[#26382f] transition-colors duration-300 hover:border-[#26382f] hover:bg-white/40"
               >
-                →
+                <span>高島屋植物園を見る</span>
+
+                <span
+                  aria-hidden="true"
+                  className="inline-block transition-transform duration-300 group-hover:translate-x-1.5"
+                >
+                  →
+                </span>
+              </MotionLink>
+            ) : (
+              <span className="inline-flex min-h-14 cursor-not-allowed items-center justify-center border border-[#26382f]/15 px-8 text-sm font-medium tracking-[0.16em] text-[#7b877f]">
+                高島屋植物園 — COMING SOON
               </span>
-            </MotionLink>
+            )}
           </motion.div>
 
           <motion.div

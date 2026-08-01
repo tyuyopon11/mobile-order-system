@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  isShopPubliclyAccessible,
+  SHOP_PUBLICATION_COLUMN,
+} from "@/lib/shops/publication";
 
 import type {
   Product,
@@ -20,6 +24,8 @@ type ShopRow = {
   accepts_tuesday: boolean;
   accepts_saturday: boolean;
   order_cutoff_hours: number;
+  published: boolean;
+  show_on_public_site: boolean;
 };
 
 function sortImages(
@@ -130,6 +136,18 @@ export async function getShopItems(
   console.log("★★★★ shopId =", shopId);
 
   const supabase = await createClient();
+
+  const { data: publicShop, error: shopError } = await supabase
+    .from("shops")
+    .select("id")
+    .eq("id", shopId)
+    .eq(SHOP_PUBLICATION_COLUMN, true)
+    .eq("show_on_public_site", true)
+    .maybeSingle();
+
+  if (shopError || !publicShop) {
+    throw new Error("Shop is not publicly available.");
+  }
 
   const safePage =
     Number.isInteger(page) && page > 0 ? page : 1;
@@ -247,7 +265,9 @@ export async function getProduct(
           ordering_enabled,
           accepts_tuesday,
           accepts_saturday,
-          order_cutoff_hours
+          order_cutoff_hours,
+          published,
+          show_on_public_site
         )
       `
     )
@@ -272,7 +292,7 @@ export async function getProduct(
     ? rawShop[0]
     : rawShop;
 
-  if (!shopRow) {
+  if (!shopRow || !isShopPubliclyAccessible(shopRow)) {
     throw new Error(
       "この商品に紐づくショップ情報がありません。"
     );

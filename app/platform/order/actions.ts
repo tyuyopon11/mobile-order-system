@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { isShopPubliclyAccessible } from "@/lib/shops/publication";
 import {
   auctionCutoffAt,
   auctionWeekday,
@@ -230,6 +231,8 @@ export async function createOrder(
         shop_id,
         shops (
           contact_email,
+          published,
+          show_on_public_site,
           ordering_enabled,
           accepts_tuesday,
           accepts_saturday,
@@ -237,6 +240,7 @@ export async function createOrder(
         )
       `)
       .eq("id", productId)
+      .eq("published", true)
       .single();
 
     if (productError || !product) {
@@ -265,6 +269,13 @@ export async function createOrder(
     const shopRelation = Array.isArray(product.shops)
       ? product.shops[0]
       : product.shops;
+
+    if (!isShopPubliclyAccessible(shopRelation)) {
+      return {
+        success: false,
+        message: "このショップは現在公開されていません。",
+      };
+    }
     const auctionDate = new Date(`${deliveryDate}T00:00:00+09:00`);
     const auctionDay = auctionWeekday(deliveryDate);
     const acceptsAuctionDay =

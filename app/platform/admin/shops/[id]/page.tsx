@@ -10,12 +10,14 @@ type EditShopPageProps = {
   params: Promise<{
     id: string;
   }>;
+  searchParams: Promise<{ imageError?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
-export default async function EditShopPage({ params }: EditShopPageProps) {
+export default async function EditShopPage({ params, searchParams }: EditShopPageProps) {
   const { id } = await params;
+  const query = await searchParams;
   const shop = await getShopById(id);
 
   if (!shop) {
@@ -43,6 +45,10 @@ export default async function EditShopPage({ params }: EditShopPageProps) {
         </p>
       </section>
 
+      {query.imageError && (
+        <p className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{query.imageError}</p>
+      )}
+
       <section className="mt-6 rounded-[24px] border border-stone-200 bg-white px-6 py-7 shadow-sm sm:px-9 sm:py-9">
         <EditShopForm shop={shop} />
       </section>
@@ -53,17 +59,16 @@ export default async function EditShopPage({ params }: EditShopPageProps) {
             SHOP IMAGES
           </p>
           <h2 className="mt-2 text-xl font-semibold text-stone-900">
-            ロゴ・バナー管理
+            バナー管理
           </h2>
           <p className="mt-2 text-sm leading-6 text-stone-500">
-            ショップページと一覧に使用する画像を登録・変更・削除できます。
+            ショップページに使用するバナー画像を登録・変更・削除できます。ロゴは上の基本情報フォームから変更できます。
           </p>
         </div>
 
         <ShopImageManager
           shopId={shop.id}
           shopName={shop.shop_name}
-          initialLogoUrl={shop.logo_url}
           initialBannerUrl={shop.banner_url}
         />
       </section>

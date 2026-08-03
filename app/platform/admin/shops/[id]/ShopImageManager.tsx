@@ -8,7 +8,6 @@ type AssetKind = "logo" | "banner";
 type ShopImageManagerProps = {
   shopId: string;
   shopName: string;
-  initialLogoUrl: string | null;
   initialBannerUrl: string | null;
 };
 
@@ -180,17 +179,10 @@ function AssetCard({
 export default function ShopImageManager({
   shopId,
   shopName,
-  initialLogoUrl,
   initialBannerUrl,
 }: ShopImageManagerProps) {
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <AssetCard
-        shopId={shopId}
-        shopName={shopName}
-        kind="logo"
-        initialUrl={initialLogoUrl}
-      />
+    <div>
       <AssetCard
         shopId={shopId}
         shopName={shopName}

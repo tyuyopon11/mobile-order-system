@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import ShopLogoField from "@/components/forms/ShopLogoField";
 
 import type { Shop } from "@/lib/services/shop";
 
@@ -142,6 +143,8 @@ export default function EditShopForm({ shop }: { shop: Shop }) {
           <FieldError message={state.fieldErrors.description} />
         </div>
       </div>
+
+      <ShopLogoField existingImageUrl={shop.logo_url} />
 
       <fieldset className="rounded-2xl border border-stone-200 bg-stone-50/60 p-5">
         <legend className="px-2 text-sm font-semibold text-stone-800">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import ShopLogoField from "@/components/forms/ShopLogoField";
 
 import {
   createShop,
@@ -138,6 +139,8 @@ export default function ShopForm() {
           <FieldError message={state.fieldErrors.description} />
         </div>
       </div>
+
+      <ShopLogoField />
 
       <fieldset className="rounded-2xl border border-stone-200 bg-stone-50/60 p-5">
         <legend className="px-2 text-sm font-semibold text-stone-800">

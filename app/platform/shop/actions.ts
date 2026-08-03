@@ -7,6 +7,7 @@ import { getPlatformAccess, isApprovedPlatformAdmin } from "@/lib/auth/platform-
 import { isProductCategory } from "@/lib/products/categories";
 import { uploadProductImage } from "@/lib/products/images";
 import { getProductPublicationErrors } from "@/lib/products/publication";
+import { saveShopLogo } from "@/lib/shops/images";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function openAdminShop(formData: FormData) {
@@ -25,18 +26,29 @@ export async function updateVendorShop(formData: FormData) {
   const access = await requireShopAccess();
   const user = await canManageShop(access.shopId);
   if (!user) redirect("/platform");
-  await supabaseAdmin.from("shops").update({
+  const { error } = await supabaseAdmin.from("shops").update({
     short_description: String(formData.get("shortDescription") ?? "").trim() || null,
     description: String(formData.get("description") ?? "").trim() || null,
     announcement: String(formData.get("announcement") ?? "").trim() || null,
-    logo_url: String(formData.get("logoUrl") ?? "").trim() || null,
     ordering_enabled: formData.get("orderingEnabled") === "on",
     accepts_tuesday: formData.get("acceptsTuesday") === "on",
     accepts_saturday: formData.get("acceptsSaturday") === "on",
     order_cutoff_hours: Math.max(1, Math.min(168, Number(formData.get("orderCutoffHours") ?? 24))),
     updated_at: new Date().toISOString(), updated_by: user.id,
   }).eq("id", access.shopId);
+  if (error) redirect("/platform/shop/settings?error=ショップ設定を保存できませんでした。");
+  const logoFile = formData.get("logoFile");
+  if (logoFile instanceof File && logoFile.size > 0) {
+    try {
+      await saveShopLogo(access.shopId, logoFile, user.id);
+    } catch (uploadError) {
+      const message = uploadError instanceof Error ? uploadError.message : "ロゴ画像を保存できませんでした。";
+      redirect(`/platform/shop/settings?error=${encodeURIComponent(`設定は保存しましたが、${message}`)}`);
+    }
+  }
   revalidatePath("/platform/shop", "layout");
+  revalidatePath("/platform");
+  revalidatePath(`/platform/shops/${access.slug}`);
   redirect("/platform/shop/settings?saved=1");
 }
 

@@ -1,29 +1,19 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_IMAGE_BYTES,
+  removePublicImage,
+  uploadPublicImage,
+  validateImageFile,
+} from "@/lib/images/storage";
 
 export const PRODUCT_IMAGE_BUCKET = "exhibition-images";
 export const MAX_PRODUCT_IMAGES = 6;
-export const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024;
-export const ALLOWED_PRODUCT_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
-
-function extensionFor(file: File) {
-  if (file.type === "image/png") return "png";
-  if (file.type === "image/webp") return "webp";
-  return "jpg";
-}
+export const MAX_PRODUCT_IMAGE_BYTES = MAX_IMAGE_BYTES;
+export const ALLOWED_PRODUCT_IMAGE_TYPES = ALLOWED_IMAGE_TYPES;
 
 export function validateProductImage(file: File): string | null {
-  if (file.size === 0) return "商品画像を選択してください。";
-  if (!ALLOWED_PRODUCT_IMAGE_TYPES.has(file.type)) {
-    return "JPEG、PNG、WebP形式の画像を選択してください。";
-  }
-  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
-    return "商品画像は5MB以下にしてください。";
-  }
-  return null;
+  return validateImageFile(file, "商品画像");
 }
 
 export async function uploadProductImage(
@@ -61,31 +51,23 @@ export async function uploadProductImage(
     }
   }
 
-  const filePath = `${productId}/${Date.now()}-${crypto.randomUUID()}.${extensionFor(file)}`;
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from(PRODUCT_IMAGE_BUCKET)
-    .upload(filePath, await file.arrayBuffer(), {
-      contentType: file.type,
-      cacheControl: "3600",
-      upsert: false,
-    });
-  if (uploadError) throw new Error("商品画像をアップロードできませんでした。");
-
-  const { data: publicUrlData } = supabaseAdmin.storage
-    .from(PRODUCT_IMAGE_BUCKET)
-    .getPublicUrl(filePath);
+  const uploaded = await uploadPublicImage({
+    bucket: PRODUCT_IMAGE_BUCKET,
+    directory: String(productId),
+    file,
+  });
   const { data: image, error: insertError } = await supabaseAdmin
     .from("exhibition_images")
     .insert({
       item_id: productId,
-      image_url: publicUrlData.publicUrl,
+      image_url: uploaded.imageUrl,
       sort_order: makePrimary ? 0 : existingImages?.length ?? 0,
     })
     .select("id,image_url,sort_order")
     .single();
 
   if (insertError || !image) {
-    await supabaseAdmin.storage.from(PRODUCT_IMAGE_BUCKET).remove([filePath]);
+    await removePublicImage(PRODUCT_IMAGE_BUCKET, uploaded.filePath);
     throw new Error("商品画像の情報を保存できませんでした。");
   }
   return image;

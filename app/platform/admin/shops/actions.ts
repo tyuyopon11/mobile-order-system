@@ -8,6 +8,7 @@ import {
   isApprovedPlatformAdmin,
 } from "@/lib/auth/platform-user";
 import { createClient } from "@/lib/supabase/server";
+import { saveShopLogo } from "@/lib/shops/images";
 
 type ShopBooleanField = "published" | "is_featured";
 
@@ -176,7 +177,7 @@ export async function createShop(
 
   const supabase = await createClient();
   const now = new Date().toISOString();
-  const { error } = await supabase.from("shops").insert({
+  const { data: createdShop, error } = await supabase.from("shops").insert({
     shop_name: shopName,
     slug,
     short_description: shortDescription,
@@ -198,7 +199,7 @@ export async function createShop(
     show_on_public_site: showOnPublicSite,
     is_featured: isFeatured,
     updated_by: access.platformUser.id,
-  });
+  }).select("id").single();
 
   if (error) {
     console.error("[Lei Port Admin] Failed to create shop:", error.message);
@@ -218,6 +219,16 @@ export async function createShop(
       message: "ショップを登録できませんでした。もう一度お試しください。",
       fieldErrors: {},
     };
+  }
+
+  const logoFile = formData.get("logoFile");
+  if (createdShop && logoFile instanceof File && logoFile.size > 0) {
+    try {
+      await saveShopLogo(String(createdShop.id), logoFile, access.platformUser.id);
+    } catch (uploadError) {
+      const message = uploadError instanceof Error ? uploadError.message : "ロゴ画像を保存できませんでした。";
+      redirect(`/platform/admin/shops/${createdShop.id}?imageError=${encodeURIComponent(`ショップは登録しましたが、${message}`)}`);
+    }
   }
 
   revalidatePath("/platform");
@@ -412,6 +423,16 @@ export async function updateShop(
       message: "ショップを更新できませんでした。もう一度お試しください。",
       fieldErrors: {},
     };
+  }
+
+  const logoFile = formData.get("logoFile");
+  if (logoFile instanceof File && logoFile.size > 0) {
+    try {
+      await saveShopLogo(shopId, logoFile, access.platformUser.id);
+    } catch (uploadError) {
+      const message = uploadError instanceof Error ? uploadError.message : "ロゴ画像を保存できませんでした。";
+      redirect(`/platform/admin/shops/${shopId}?imageError=${encodeURIComponent(`ショップ情報は保存しましたが、${message}`)}`);
+    }
   }
 
   revalidatePath("/platform");

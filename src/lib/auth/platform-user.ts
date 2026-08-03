@@ -9,6 +9,12 @@ export type PlatformUserRole =
   | "vendor"
   | "corporate";
 
+export function isShopRole(
+  role: string | null | undefined
+): role is "shop" | "shop_admin" {
+  return role === "shop" || role === "shop_admin";
+}
+
 export type PlatformApprovalStatus =
   | "pending"
   | "approved"
@@ -186,5 +192,8 @@ export function isApprovedPlatformAdmin(
 }
 
 export function isApprovedShopUser(access: PlatformAccessResult): boolean {
-  return access.state === "approved" && access.platformUser?.role === "shop";
+  return (
+    access.state === "approved" &&
+    isShopRole(access.platformUser?.role)
+  );
 }

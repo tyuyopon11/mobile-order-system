@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { isShopRole } from "@/lib/auth/platform-user";
 
 export type LoginState = {
   error: string | null;
@@ -122,7 +123,7 @@ export async function login(
   }
 
   revalidatePath("/", "layout");
-  if (platformUser.role === "shop") redirect("/platform/shop");
+  if (isShopRole(platformUser.role)) redirect("/platform/shop");
   if (platformUser.role === "admin" && nextPath === "/platform") redirect("/platform/admin");
   redirect(nextPath);
 }

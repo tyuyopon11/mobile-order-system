@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { canManageShop } from "@/lib/auth/shop-access";
+import { isProductCategory, PRODUCT_CATEGORIES } from "@/lib/products/categories";
 
 const PRODUCT_HEADERS = [
   "商品番号",
@@ -147,12 +148,19 @@ export async function POST(request: NextRequest) {
       const irisu = cellNumber(itemSheet, `I${row}`);
       const quantity = cellNumber(itemSheet, `J${row}`);
       const price = cellNumber(itemSheet, `K${row}`);
+      const category = cellText(itemSheet, `C${row}`);
 
       if (itemNo === null || !Number.isInteger(itemNo) || itemNo < 1) {
         return NextResponse.json({ error: `${row}行目の商品番号は1以上の整数で入力してください。` }, { status: 400 });
       }
       if (!productName) {
         return NextResponse.json({ error: `${row}行目の商品名は必須です。` }, { status: 400 });
+      }
+      if (!isProductCategory(category)) {
+        return NextResponse.json(
+          { error: `${row}行目のカテゴリーは「${PRODUCT_CATEGORIES.join("、")}」から入力してください。` },
+          { status: 400 }
+        );
       }
       if (irisu === null || !Number.isInteger(irisu) || irisu < 1) {
         return NextResponse.json({ error: `${row}行目の入数は1以上の整数で入力してください。` }, { status: 400 });
@@ -167,7 +175,7 @@ export async function POST(request: NextRequest) {
       rows.push({
         item_no: itemNo,
         product_name: productName,
-        category: cellText(itemSheet, `C${row}`),
+        category,
         item: cellText(itemSheet, `D${row}`),
         variety: cellText(itemSheet, `E${row}`),
         tree_height: cellText(itemSheet, `F${row}`),

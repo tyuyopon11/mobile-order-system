@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ADMIN_SHOP_COOKIE, canManageShop, requireShopAccess } from "@/lib/auth/shop-access";
 import { getPlatformAccess, isApprovedPlatformAdmin } from "@/lib/auth/platform-user";
+import { isProductCategory } from "@/lib/products/categories";
 import { uploadProductImage } from "@/lib/products/images";
 import { getProductPublicationErrors } from "@/lib/products/publication";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
@@ -47,6 +48,9 @@ export async function createVendorProduct(formData: FormData) {
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
   const imageFile = formData.get("imageFile");
+  if (category && !isProductCategory(category)) {
+    redirect("/platform/shop/products/new?error=カテゴリーは一覧から選択してください。");
+  }
   const errors = getProductPublicationErrors({ name, category, irisu, price });
   if (intent === "publish" && errors.length) {
     redirect(`/platform/shop/products/new?error=${encodeURIComponent(`${errors.join("・")}を確認してください。`)}`);
@@ -76,7 +80,7 @@ export async function saveVendorProductDetails(formData: FormData) {
   const productId = String(formData.get("productId") ?? "");
   const { data: product } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,shop_id,published_at")
+    .select("id,shop_id,category,published_at")
     .eq("id", productId)
     .eq("shop_id", access.shopId)
     .maybeSingle();
@@ -88,6 +92,9 @@ export async function saveVendorProductDetails(formData: FormData) {
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
   const imageFile = formData.get("imageFile");
+  if (category && !isProductCategory(category) && category !== product.category) {
+    redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent("カテゴリーは一覧から選択してください。")}`);
+  }
   const errors = getProductPublicationErrors({ name, category, irisu, price });
   if (intent === "publish" && errors.length) {
     redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent(`${errors.join("・")}を確認してください。`)}`);

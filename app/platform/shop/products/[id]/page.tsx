@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireShopAccess } from "@/lib/auth/shop-access";
+import { isProductCategory, PRODUCT_CATEGORIES } from "@/lib/products/categories";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ProductImageField from "../ProductImageField";
 import { saveVendorProductDetails } from "../../actions";
@@ -35,7 +36,15 @@ export default async function Page({ params, searchParams }: {
       <form action={saveVendorProductDetails} className="mt-6 grid gap-5 rounded-2xl border bg-white p-5 sm:grid-cols-2 sm:p-6">
         <input type="hidden" name="productId" value={product.id} />
         <label className="text-sm">商品名<input name="productName" defaultValue={product.product_name ?? ""} className={input} /></label>
-        <label className="text-sm">カテゴリー<input name="category" defaultValue={product.category ?? ""} className={input} /></label>
+        <label className="text-sm">カテゴリー
+          <select name="category" defaultValue={product.category ?? ""} className={input}>
+            <option value="">選択してください</option>
+            {product.category && !isProductCategory(product.category) && (
+              <option value={product.category}>{product.category}（既存値）</option>
+            )}
+            {PRODUCT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+          </select>
+        </label>
         <label className="text-sm">樹高<input name="treeHeight" defaultValue={product.tree_height ?? ""} className={input} /></label>
         <label className="text-sm">樹形<input name="treeShape" defaultValue={product.tree_shape ?? ""} className={input} /></label>
         <label className="text-sm">鉢サイズ<input name="potSize" defaultValue={product.pot_size ?? ""} className={input} /></label>

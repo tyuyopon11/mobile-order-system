@@ -1,3 +1,5 @@
+import { isProductCategory } from "@/lib/products/categories";
+
 export type ProductPublicationInput = {
   name: string | null | undefined;
   category: string | null | undefined;
@@ -10,7 +12,7 @@ export function getProductPublicationErrors(
 ): string[] {
   const errors: string[] = [];
   if (!input.name?.trim()) errors.push("商品名");
-  if (!input.category?.trim()) errors.push("カテゴリー");
+  if (!isProductCategory(input.category)) errors.push("カテゴリー");
   if (!Number.isInteger(Number(input.irisu)) || Number(input.irisu) < 1) {
     errors.push("ケース入数");
   }

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import ProductCard from "./ProductCard";
+import { PRODUCT_CATEGORIES } from "@/lib/products/categories";
 import type { Product } from "@/lib/types/product";
 
 export default function ProductCatalog({ items }: { items: Product[] }) {
@@ -43,7 +44,7 @@ export default function ProductCatalog({ items }: { items: Product[] }) {
           />
           <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="カテゴリー" className={selectClass}>
             <option value="">カテゴリー：すべて</option>
-            {options("category").map((value) => <option key={value}>{value}</option>)}
+            {PRODUCT_CATEGORIES.map((value) => <option key={value}>{value}</option>)}
           </select>
           <select value={height} onChange={(event) => setHeight(event.target.value)} aria-label="樹高" className={selectClass}>
             <option value="">樹高：すべて</option>

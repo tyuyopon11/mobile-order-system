@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PRODUCT_CATEGORIES } from "@/lib/products/categories";
 import ProductImageField from "../ProductImageField";
 import { createVendorProduct } from "../../actions";
 
@@ -17,7 +18,12 @@ export default async function Page({
       {query.error && <p className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{query.error}</p>}
       <form action={createVendorProduct} className="mt-6 grid gap-5 rounded-2xl border bg-white p-5 sm:grid-cols-2 sm:p-6">
         <label className="text-sm">商品名<input name="productName" className={input} /></label>
-        <label className="text-sm">カテゴリー<input name="category" className={input} /></label>
+        <label className="text-sm">カテゴリー
+          <select name="category" defaultValue="" className={input}>
+            <option value="">選択してください</option>
+            {PRODUCT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+          </select>
+        </label>
         <label className="text-sm">樹高<input name="treeHeight" className={input} /></label>
         <label className="text-sm">樹形<input name="treeShape" className={input} /></label>
         <label className="text-sm">鉢サイズ<input name="potSize" className={input} /></label>

@@ -11,6 +11,7 @@ import {
   DEFAULT_SALES_UNIT,
   SALES_UNITS,
 } from "@/lib/products/sales-unit";
+import { PRODUCT_CATEGORIES } from "@/lib/products/categories";
 
 type ShopOption = {
   id: string;
@@ -114,8 +115,15 @@ export default function ProductForm({ shops }: { shops: ShopOption[] }) {
             <FieldError message={state.fieldErrors.productName} />
           </div>
 
+          <div>
+            <label htmlFor="category" className="mb-2 block text-sm font-medium">カテゴリー</label>
+            <select id="category" name="category" defaultValue="" disabled={isPending} className={inputClass}>
+              <option value="">選択してください</option>
+              {PRODUCT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+            <FieldError message={state.fieldErrors.category} />
+          </div>
           {[
-            ["category", "カテゴリー"],
             ["item", "品目"],
             ["variety", "品種"],
             ["spec", "規格"],

@@ -8,6 +8,7 @@ import {
   isApprovedPlatformAdmin,
 } from "@/lib/auth/platform-user";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { isProductCategory } from "@/lib/products/categories";
 import {
   isSalesUnit,
 } from "@/lib/products/sales-unit";
@@ -17,6 +18,7 @@ export type ProductFieldErrors = Partial<
     | "shopId"
     | "itemNo"
     | "productName"
+    | "category"
     | "quantity"
     | "price"
     | "salesUnit"
@@ -97,6 +99,13 @@ export async function createProduct(
     fieldErrors.productName = "商品名を入力してください。";
   } else if (productName.length > 300) {
     fieldErrors.productName = "商品名は300文字以内で入力してください。";
+  }
+
+  if (category !== null && !isProductCategory(category)) {
+    fieldErrors.category = "カテゴリーは一覧から選択してください。";
+  }
+  if (published && !isProductCategory(category)) {
+    fieldErrors.category = "公開する商品はカテゴリーを選択してください。";
   }
 
   if (
@@ -289,6 +298,12 @@ export async function updateProduct(
     };
   }
 
+  const { data: existingProduct } = await supabaseAdmin
+    .from("exhibition_items")
+    .select("category")
+    .eq("id", productId)
+    .maybeSingle();
+
   if (!shopId) {
     fieldErrors.shopId = "ショップを選択してください。";
   }
@@ -297,6 +312,17 @@ export async function updateProduct(
     fieldErrors.productName = "商品名を入力してください。";
   } else if (productName.length > 300) {
     fieldErrors.productName = "商品名は300文字以内で入力してください。";
+  }
+
+  if (
+    category !== null &&
+    !isProductCategory(category) &&
+    category !== existingProduct?.category
+  ) {
+    fieldErrors.category = "カテゴリーは一覧から選択してください。";
+  }
+  if (published && !isProductCategory(category)) {
+    fieldErrors.category = "公開する商品はカテゴリーを選択してください。";
   }
 
   if (!Number.isInteger(itemNo) || itemNo <= 0 || itemNo > 999999) {

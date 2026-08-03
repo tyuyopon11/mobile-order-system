@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ADMIN_SHOP_COOKIE, canManageShop, requireShopAccess } from "@/lib/auth/shop-access";
 import { getPlatformAccess, isApprovedPlatformAdmin } from "@/lib/auth/platform-user";
+import { uploadProductImage } from "@/lib/products/images";
+import { getProductPublicationErrors } from "@/lib/products/publication";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function openAdminShop(formData: FormData) {
@@ -37,17 +39,6 @@ export async function updateVendorShop(formData: FormData) {
   redirect("/platform/shop/settings?saved=1");
 }
 
-export async function updateVendorProduct(formData: FormData) {
-  const access = await requireShopAccess();
-  const id = String(formData.get("productId") ?? "");
-  const { data } = await supabaseAdmin.from("exhibition_items").select("id").eq("id",id).eq("shop_id",access.shopId).maybeSingle();
-  if (!data) redirect("/platform/shop/products");
-  const status = String(formData.get("status") ?? "preparing");
-  const published = formData.get("published") === "on" && status !== "preparing";
-  await supabaseAdmin.from("exhibition_items").update({quantity:Math.max(0,Number(formData.get("quantity")??0)),status,published,published_at:published?new Date().toISOString():null,updated_at:new Date().toISOString(),updated_by:access.userId}).eq("id",id).eq("shop_id",access.shopId);
-  revalidatePath("/platform/shop/products");
-}
-
 export async function createVendorProduct(formData: FormData) {
   const access = await requireShopAccess();
   const name = String(formData.get("productName") ?? "").trim();
@@ -55,32 +46,29 @@ export async function createVendorProduct(formData: FormData) {
   const intent = String(formData.get("intent") ?? "draft");
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
-  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
-  const errors = publicationErrors({ name, category, irisu, price });
+  const imageFile = formData.get("imageFile");
+  const errors = getProductPublicationErrors({ name, category, irisu, price });
   if (intent === "publish" && errors.length) {
-    redirect(`/platform/shop/products/new?error=${encodeURIComponent(`${errors.join("・")}を入力してください。`)}`);
+    redirect(`/platform/shop/products/new?error=${encodeURIComponent(`${errors.join("・")}を確認してください。`)}`);
   }
   const { data: latest } = await supabaseAdmin.from("exhibition_items").select("item_no").eq("shop_id", access.shopId).order("item_no", { ascending: false }).limit(1).maybeSingle();
   const quantity = Math.max(0, Number(formData.get("quantity") ?? 0));
   const published = intent === "publish";
-  const { data: created } = await supabaseAdmin.from("exhibition_items").insert({ shop_id: access.shopId, item_no: Number(latest?.item_no ?? 0) + 1, product_name: name || null, category: category || null, tree_height: String(formData.get("treeHeight") ?? "") || null, tree_shape: String(formData.get("treeShape") ?? "") || null, pot_size: String(formData.get("potSize") ?? "") || null, irisu: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, units_per_sales_unit: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, sales_unit: "case", quantity, price: Number.isFinite(price) && price >= 0 ? price : 0, status: published ? (quantity > 0 ? "selling" : "sold") : "preparing", published, published_at: published ? new Date().toISOString() : null, input_completed: published, created_by: access.userId, updated_by: access.userId }).select("id").single();
-  if (created && imageUrl) await supabaseAdmin.from("exhibition_images").insert({ item_id: created.id, image_url: imageUrl, sort_order: 0 });
+  const { data: created, error: createError } = await supabaseAdmin.from("exhibition_items").insert({ shop_id: access.shopId, item_no: Number(latest?.item_no ?? 0) + 1, product_name: name || null, category: category || null, tree_height: String(formData.get("treeHeight") ?? "").trim() || null, tree_shape: String(formData.get("treeShape") ?? "").trim() || null, pot_size: String(formData.get("potSize") ?? "").trim() || null, irisu: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, units_per_sales_unit: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, sales_unit: "case", quantity, price: Number.isFinite(price) && price >= 0 ? price : 0, status: published ? (quantity > 0 ? "selling" : "sold") : "preparing", published, published_at: published ? new Date().toISOString() : null, input_completed: published, created_by: access.userId, updated_by: access.userId }).select("id").single();
+  if (createError || !created) {
+    redirect("/platform/shop/products/new?error=商品を保存できませんでした。もう一度お試しください。");
+  }
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      await uploadProductImage(Number(created.id), imageFile, { makePrimary: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "商品画像を登録できませんでした。";
+      redirect(`/platform/shop/products/${created.id}?error=${encodeURIComponent(`商品は保存しましたが、${message}`)}`);
+    }
+  }
   revalidatePath("/platform/shop/products");
-  redirect("/platform/shop/products");
-}
-
-function publicationErrors(input: {
-  name: string;
-  category: string;
-  irisu: number;
-  price: number;
-}) {
-  const errors: string[] = [];
-  if (!input.name) errors.push("商品名");
-  if (!input.category) errors.push("カテゴリー");
-  if (!Number.isInteger(input.irisu) || input.irisu < 1) errors.push("ケース入数");
-  if (!Number.isFinite(input.price) || input.price <= 0) errors.push("税抜価格（1円以上）");
-  return errors;
+  revalidatePath(`/platform/shops/${access.slug}`);
+  redirect(`/platform/shop/products?created=${created.id}`);
 }
 
 export async function saveVendorProductDetails(formData: FormData) {
@@ -88,7 +76,7 @@ export async function saveVendorProductDetails(formData: FormData) {
   const productId = String(formData.get("productId") ?? "");
   const { data: product } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,shop_id,published_at,exhibition_images(id)")
+    .select("id,shop_id,published_at")
     .eq("id", productId)
     .eq("shop_id", access.shopId)
     .maybeSingle();
@@ -99,16 +87,15 @@ export async function saveVendorProductDetails(formData: FormData) {
   const category = String(formData.get("category") ?? "").trim();
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
-  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
-  const currentImages = Array.isArray(product.exhibition_images) ? product.exhibition_images : [];
-  const errors = publicationErrors({ name, category, irisu, price });
+  const imageFile = formData.get("imageFile");
+  const errors = getProductPublicationErrors({ name, category, irisu, price });
   if (intent === "publish" && errors.length) {
-    redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent(`${errors.join("・")}を入力してください。`)}`);
+    redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent(`${errors.join("・")}を確認してください。`)}`);
   }
 
   const quantity = Math.max(0, Number(formData.get("quantity") ?? 0));
   const published = intent === "publish";
-  await supabaseAdmin.from("exhibition_items").update({
+  const { error: updateError } = await supabaseAdmin.from("exhibition_items").update({
     product_name: name || null,
     category: category || null,
     tree_height: String(formData.get("treeHeight") ?? "").trim() || null,
@@ -125,12 +112,68 @@ export async function saveVendorProductDetails(formData: FormData) {
     updated_at: new Date().toISOString(),
     updated_by: access.userId,
   }).eq("id", productId).eq("shop_id", access.shopId);
-
-  if (imageUrl && currentImages.length === 0) {
-    await supabaseAdmin.from("exhibition_images").insert({ item_id: Number(productId), image_url: imageUrl, sort_order: 0 });
+  if (updateError) {
+    redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent("商品を保存できませんでした。もう一度お試しください。")}`);
+  }
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      await uploadProductImage(Number(productId), imageFile, { makePrimary: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "商品画像を登録できませんでした。";
+      redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent(`商品情報は保存しましたが、${message}`)}`);
+    }
   }
   revalidatePath("/platform/shop/products");
   revalidatePath(`/platform/shop/products/${productId}`);
   revalidatePath(`/platform/products/${productId}`);
+  revalidatePath(`/platform/shops/${access.slug}`);
   redirect(`/platform/shop/products/${productId}?saved=${published ? "published" : "draft"}`);
+}
+
+export async function setVendorProductPublished(formData: FormData) {
+  const access = await requireShopAccess();
+  const productId = String(formData.get("productId") ?? "");
+  const publish = String(formData.get("publish") ?? "false") === "true";
+  const { data: product, error: productError } = await supabaseAdmin
+    .from("exhibition_items")
+    .select("id,product_name,category,irisu,price,quantity,published_at")
+    .eq("id", productId)
+    .eq("shop_id", access.shopId)
+    .maybeSingle();
+  if (productError || !product) redirect("/platform/shop/products?error=商品を確認できませんでした。");
+
+  if (publish) {
+    const errors = getProductPublicationErrors({
+      name: product.product_name,
+      category: product.category,
+      irisu: Number(product.irisu),
+      price: Number(product.price),
+    });
+    if (errors.length) {
+      redirect(`/platform/shop/products?error=${encodeURIComponent(`${errors.join("・")}を確認してから公開してください。`)}`);
+    }
+  }
+
+  const now = new Date().toISOString();
+  const quantity = Math.max(0, Number(product.quantity ?? 0));
+  const { error } = await supabaseAdmin
+    .from("exhibition_items")
+    .update({
+      published: publish,
+      published_at: publish ? product.published_at ?? now : null,
+      input_completed: publish,
+      status: publish ? (quantity > 0 ? "selling" : "sold") : "preparing",
+      updated_at: now,
+      updated_by: access.userId,
+    })
+    .eq("id", productId)
+    .eq("shop_id", access.shopId);
+  if (error) redirect("/platform/shop/products?error=公開状態を更新できませんでした。");
+
+  revalidatePath("/platform/shop/products");
+  revalidatePath(`/platform/shop/products/${productId}`);
+  revalidatePath(`/platform/products/${productId}`);
+  revalidatePath(`/platform/shops/${access.slug}`);
+  revalidatePath("/platform");
+  redirect(`/platform/shop/products?updated=${publish ? "published" : "unpublished"}`);
 }

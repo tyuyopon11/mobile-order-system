@@ -235,7 +235,7 @@ export default async function PlatformPage() {
 
                     <div className="mt-6 flex justify-center">
                       {shop.logo_url ? (
-                        <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white p-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] ring-1 ring-stone-100 sm:h-36 sm:w-36">
+                        <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.06)] ring-1 ring-stone-100 sm:h-36 sm:w-36">
                           <img
                             src={shop.logo_url}
                             alt={`${shop.shop_name} ロゴ`}

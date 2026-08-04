@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { calculateTotalUnits, resolveOrderAmount, resolveOrderUnitPrice } from "@/lib/orders/amounts";
-import CancelOrderButton from "./CancelOrderButton";
+import CancelOrderButton from "@/components/orders/CancelOrderButton";
+import { cancelOrder } from "./actions";
 
 type ItemRow = {
   item_no: number | null;
@@ -106,6 +107,7 @@ export default async function ShopOrderDetailPage({
             orderId={String(order.id)}
             orderNumber={order.order_number ?? String(order.id)}
             isCancelled={isCancelled}
+            action={cancelOrder}
           />
           <a href={`/api/platform/admin/orders/export?order_number=${encodeURIComponent(order.order_number ?? String(order.id))}`} className="rounded-xl bg-green-800 px-5 py-3 text-sm font-medium text-white hover:bg-green-900">
             CSV出力

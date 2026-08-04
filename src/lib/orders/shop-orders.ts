@@ -12,6 +12,7 @@ export type ShopOrderItem = {
   item_no: number | null;
   product_name: string | null;
   price: number | null;
+  shop_name: string | null;
 };
 
 export type ShopOrder = {
@@ -27,6 +28,8 @@ export type ShopOrder = {
   irisu: number | null;
   item_id: number;
   note: string | null;
+  unit_price: number | null;
+  total_amount: number | null;
   item: ShopOrderItem;
 };
 
@@ -37,17 +40,20 @@ export async function getShopOrders(
 ): Promise<ShopOrder[]> {
   const { data: items, error: itemError } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,item_no,product_name,price")
+    .select("id,item_no,product_name,price,shops(shop_name)")
     .eq("shop_id", shopId);
   if (itemError) throw new Error(itemError.message);
 
-  const itemRows = (items ?? []) as ShopOrderItem[];
+  const itemRows = (items ?? []).map((item: any) => {
+    const shop = Array.isArray(item.shops) ? item.shops[0] : item.shops;
+    return { id: item.id, item_no: item.item_no, product_name: item.product_name, price: item.price, shop_name: shop?.shop_name ?? null } as ShopOrderItem;
+  });
   const itemIds = itemRows.map((item) => item.id);
   if (!itemIds.length) return [];
 
   let query = supabaseAdmin
     .from("exhibition_orders")
-    .select("id,order_number,auction_date,ordered_at,buyer_no,branch_no,buyer_name,contact_name,quantity,irisu,item_id,note")
+    .select("id,order_number,auction_date,ordered_at,buyer_no,branch_no,buyer_name,contact_name,quantity,irisu,item_id,note,unit_price,total_amount")
     .in("item_id", itemIds)
     .eq("cancelled", false);
 

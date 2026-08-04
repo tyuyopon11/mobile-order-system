@@ -6,6 +6,7 @@ import ProductInfo from "@/components/ProductInfo";
 import PurchaseCard from "@/components/PurchaseCard";
 import ShopCard from "@/components/ShopCard";
 import { getProduct } from "@/lib/services/product";
+import { getProductSalesPeriodStatus, getProductSalesStatusLabel, isProductInSalesPeriod } from "@/lib/products/sales-period";
 
 type Props = {
   params: Promise<{
@@ -20,6 +21,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) {
     notFound();
   }
+  const salesStatus = getProductSalesPeriodStatus(product);
 
   return (
     <main className="min-h-screen bg-[#f4f0e8] text-[#25342c]">
@@ -46,6 +48,8 @@ export default async function ProductPage({ params }: Props) {
               productId={String(product.id)}
               quantity={product.quantity}
               shopSlug={product.shop.slug}
+              salesAvailable={isProductInSalesPeriod(product)}
+              salesStatusLabel={getProductSalesStatusLabel(salesStatus)}
             />
 
             <ShopCard shop={product.shop} />

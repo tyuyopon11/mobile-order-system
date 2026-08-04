@@ -5,6 +5,7 @@ import { requireShopAccess } from "@/lib/auth/shop-access";
 import { isProductCategory, PRODUCT_CATEGORIES } from "@/lib/products/categories";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ProductImageField from "../ProductImageField";
+import ProductSalesPeriodField from "@/components/product/ProductSalesPeriodField";
 import { saveVendorProductDetails } from "../../actions";
 
 export default async function Page({ params, searchParams }: {
@@ -16,7 +17,7 @@ export default async function Page({ params, searchParams }: {
   const query = await searchParams;
   const { data: product } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,item_no,product_name,category,tree_height,tree_shape,pot_size,irisu,quantity,price,published,exhibition_images(id,image_url,sort_order)")
+    .select("id,item_no,product_name,category,tree_height,tree_shape,pot_size,irisu,quantity,price,published,sales_period_enabled,sales_start_date,sales_end_date,exhibition_images(id,image_url,sort_order)")
     .eq("id", id)
     .eq("shop_id", access.shopId)
     .order("sort_order", { referencedTable: "exhibition_images", ascending: true })
@@ -52,6 +53,7 @@ export default async function Page({ params, searchParams }: {
         <label className="text-sm">販売可能ケース数<input name="quantity" type="number" min="0" step="1" defaultValue={product.quantity ?? 0} className={input} /></label>
         <label className="text-sm">税抜価格<input name="price" type="number" min="0" step="1" defaultValue={product.price ?? 0} className={input} /></label>
         <ProductImageField existingImageUrl={images[0]?.image_url ?? null} />
+        <ProductSalesPeriodField defaultEnabled={product.sales_period_enabled === true} defaultStartDate={product.sales_start_date ?? ""} defaultEndDate={product.sales_end_date ?? ""} />
         <div className="flex flex-col gap-3 border-t pt-5 sm:col-span-2 sm:flex-row sm:justify-end">
           <button name="intent" value="draft" className="rounded-xl border border-stone-400 bg-white px-6 py-3 text-sm font-medium">下書き保存</button>
           <button name="intent" value="publish" className="rounded-xl bg-green-800 px-6 py-3 text-sm font-medium text-white">公開する</button>

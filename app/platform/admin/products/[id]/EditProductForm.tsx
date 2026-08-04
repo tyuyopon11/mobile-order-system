@@ -12,6 +12,7 @@ import {
   SALES_UNITS,
 } from "@/lib/products/sales-unit";
 import { isProductCategory, PRODUCT_CATEGORIES } from "@/lib/products/categories";
+import ProductSalesPeriodField from "@/components/product/ProductSalesPeriodField";
 
 type ShopOption = {
   id: string;
@@ -43,6 +44,9 @@ export type EditableProduct = {
   status: string;
   published: boolean;
   is_featured: boolean;
+  sales_period_enabled: boolean;
+  sales_start_date: string | null;
+  sales_end_date: string | null;
 };
 
 const initialState: ProductActionState = {
@@ -352,6 +356,9 @@ export default function EditProductForm({
           ))}
         </div>
       </fieldset>
+
+      <ProductSalesPeriodField defaultEnabled={product.sales_period_enabled} defaultStartDate={product.sales_start_date ?? ""} defaultEndDate={product.sales_end_date ?? ""} />
+      <FieldError message={state.fieldErrors.salesPeriod} />
 
       <div className="flex flex-col gap-3 rounded-2xl border border-stone-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-around">
         <label className="flex cursor-pointer items-center gap-3 text-sm">

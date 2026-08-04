@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { PRODUCT_CATEGORIES } from "@/lib/products/categories";
 import ProductImageField from "../ProductImageField";
+import ProductSalesPeriodField from "@/components/product/ProductSalesPeriodField";
 import { createVendorProduct } from "../../actions";
 
 export default async function Page({
@@ -31,6 +32,7 @@ export default async function Page({
         <label className="text-sm">販売可能ケース数<input name="quantity" type="number" min="0" step="1" defaultValue="0" className={input} /></label>
         <label className="text-sm">税抜価格<input name="price" type="number" min="0" step="1" defaultValue="0" className={input} /></label>
         <ProductImageField />
+        <ProductSalesPeriodField />
         <div className="flex flex-col gap-3 border-t pt-5 sm:col-span-2 sm:flex-row sm:justify-end">
           <button name="intent" value="draft" className="rounded-xl border border-stone-400 bg-white px-6 py-3 text-sm font-medium">下書き保存</button>
           <button name="intent" value="publish" className="rounded-xl bg-green-800 px-6 py-3 text-sm font-medium text-white">公開する</button>

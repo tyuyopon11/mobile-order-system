@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { calculateTotalUnits, resolveOrderAmount, resolveOrderUnitPrice } from "@/lib/orders/amounts";
+import CancelOrderButton from "./CancelOrderButton";
 
 type ItemRow = {
   item_no: number | null;
@@ -24,6 +26,10 @@ type OrderRow = {
   quantity: number | null;
   irisu: number;
   total_units: number | null;
+  unit_price: number | null;
+  total_amount: number | null;
+  status: string | null;
+  cancelled: boolean | null;
   exhibition_items: ItemRow | ItemRow[] | null;
 };
 
@@ -70,7 +76,7 @@ export default async function ShopOrderDetailPage({
     .from("exhibition_orders")
     .select(`
       id,order_number,auction_date,ordered_at,buyer_no,branch_no,
-      buyer_name,contact_name,contact_tel,note,quantity,irisu,total_units,
+      buyer_name,contact_name,contact_tel,note,quantity,irisu,total_units,unit_price,total_amount,status,cancelled,
       exhibition_items(item_no,product_name,price,shops(shop_name))
     `)
     .eq("id", id)
@@ -82,9 +88,10 @@ export default async function ShopOrderDetailPage({
   const item = one(order.exhibition_items);
   const cases = Number(order.quantity ?? 0);
   const irisu = Number(order.irisu ?? 1);
-  const totalPots = cases * irisu;
-  const unitPrice = Number(item?.price ?? 0);
-  const amount = cases * unitPrice;
+  const totalPots = calculateTotalUnits(irisu, cases);
+  const unitPrice = resolveOrderUnitPrice(order.unit_price, item?.price);
+  const amount = resolveOrderAmount({ savedAmount: order.total_amount, savedUnitPrice: order.unit_price, currentProductPrice: item?.price, unitsPerSalesUnit: irisu, quantity: cases });
+  const isCancelled = order.cancelled === true || order.status === "cancelled";
 
   return (
     <div>
@@ -95,6 +102,11 @@ export default async function ShopOrderDetailPage({
           <p className="mt-3 text-sm text-stone-500">{order.order_number ?? order.id}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <CancelOrderButton
+            orderId={String(order.id)}
+            orderNumber={order.order_number ?? String(order.id)}
+            isCancelled={isCancelled}
+          />
           <a href={`/api/platform/admin/orders/export?order_number=${encodeURIComponent(order.order_number ?? String(order.id))}`} className="rounded-xl bg-green-800 px-5 py-3 text-sm font-medium text-white hover:bg-green-900">
             CSV出力
           </a>
@@ -107,7 +119,9 @@ export default async function ShopOrderDetailPage({
       <section className="mt-7 rounded-[24px] border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex items-center justify-between gap-4 border-b border-stone-100 pb-5">
           <h2 className="text-xl font-semibold text-stone-900">注文情報</h2>
-          <span className="rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-800">受付済</span>
+          <span className={`rounded-full px-4 py-2 text-sm font-medium ${isCancelled ? "bg-red-50 text-red-700" : "bg-green-50 text-green-800"}`}>
+            {isCancelled ? "キャンセル済み" : "受付済み"}
+          </span>
         </div>
         <dl className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <Detail label="注文番号" value={order.order_number ?? String(order.id)} />

@@ -4,6 +4,7 @@ import {
   formatUnitsPerSalesUnit,
   getSalesUnitLabel,
 } from "@/lib/products/sales-unit";
+import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
 
 type ProductInfoProps = {
   product: Product;
@@ -24,6 +25,8 @@ function isTakashimayaShop(shopName: string, slug: string) {
 }
 
 export default function ProductInfo({ product }: ProductInfoProps) {
+  const salesPeriod = formatProductSalesPeriod(product);
+  const salesPeriodStatus = getProductSalesPeriodStatus(product);
   const isTakashimaya = isTakashimayaShop(
     product.shop.shop_name,
     product.shop.slug
@@ -203,6 +206,15 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               </dd>
             </div>
           </dl>
+        </section>
+      )}
+
+      {salesPeriod && (
+        <section className="rounded-[1.75rem] border border-green-100 bg-green-50/50 p-6 sm:p-8">
+          <p className="text-xs font-semibold tracking-[0.24em] text-green-800">SALES PERIOD</p>
+          <h2 className="mt-3 text-xl font-semibold text-stone-900">販売予定期間</h2>
+          <p className="mt-4 text-base font-medium text-stone-800">{salesPeriod}</p>
+          <p className="mt-2 text-sm text-stone-600">{getProductSalesStatusLabel(salesPeriodStatus)}</p>
         </section>
       )}
 

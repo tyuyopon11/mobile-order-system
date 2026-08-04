@@ -12,6 +12,7 @@ import {
   formatUnitsPerSalesUnit,
   getSalesUnitLabel,
 } from "@/lib/products/sales-unit";
+import { calculateLineAmount } from "@/lib/orders/amounts";
 
 type OrderFormProps = {
   productId: string;
@@ -86,8 +87,13 @@ export default function OrderForm({
       return null;
     }
 
-    return unitPrice * values.quantity;
-  }, [unitPrice, values.quantity]);
+    return calculateLineAmount({
+      unitPrice,
+      unitsPerSalesUnit,
+      quantity: values.quantity,
+    });
+  }, [unitPrice, unitsPerSalesUnit, values.quantity]);
+  const hasAuctionDates = allowedAuctionDates.length > 0;
 
   function updateValue<K extends keyof FormValues>(
     key: K,
@@ -487,7 +493,7 @@ export default function OrderForm({
               id="deliveryDate"
               name="deliveryDate"
               required
-              disabled={allowedAuctionDates.length === 0}
+              disabled={!hasAuctionDates}
               value={values.deliveryDate}
               onChange={(event) =>
                 updateValue(
@@ -507,7 +513,7 @@ export default function OrderForm({
                 </option>
               ))}
             </select>
-            {allowedAuctionDates.length === 0 && (
+            {!hasAuctionDates && (
               <p role="alert" className="mt-2 text-sm font-medium text-amber-700">
                 現在選択できる競り日がありません。ショップの注文受付設定をご確認ください。
               </p>
@@ -547,6 +553,12 @@ export default function OrderForm({
             </span>
           </div>
 
+          {unitPrice !== null && (
+            <p className="mt-2 text-xs leading-6 text-stone-500">
+              {unitPrice.toLocaleString("ja-JP")}円 × {unitsPerSalesUnit}鉢 × {values.quantity}ケース
+            </p>
+          )}
+
           <p className="mt-2 text-xs leading-6 text-stone-400">
             最終的な納品内容は、注文受付後に担当者よりご案内します。
           </p>
@@ -554,9 +566,10 @@ export default function OrderForm({
 
         <button
           type="submit"
-          className="w-full rounded-full bg-green-800 px-6 py-4 text-base font-semibold text-white shadow-[0_10px_24px_rgba(22,101,52,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-green-900 hover:shadow-[0_14px_30px_rgba(22,101,52,0.22)] sm:py-5"
+          disabled={!hasAuctionDates}
+          className="w-full rounded-full bg-green-800 px-6 py-4 text-base font-semibold text-white shadow-[0_10px_24px_rgba(22,101,52,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-green-900 hover:shadow-[0_14px_30px_rgba(22,101,52,0.22)] disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none disabled:hover:translate-y-0 sm:py-5"
         >
-          注文内容を確認する
+          {hasAuctionDates ? "注文内容を確認する" : "選択できる納品日がありません"}
         </button>
       </form>
     </section>

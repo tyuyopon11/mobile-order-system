@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { Product } from "@/lib/types/product";
+import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
 
 type ProductCardProps = {
   item: Pick<
@@ -15,11 +16,17 @@ type ProductCardProps = {
     | "quantity"
     | "price"
     | "irisu"
+    | "sales_period_enabled"
+    | "sales_start_date"
+    | "sales_end_date"
   >;
 };
 
 export default function ProductCard({ item }: ProductCardProps) {
   const soldOut = item.quantity !== null && item.quantity <= 0;
+  const salesStatus = getProductSalesPeriodStatus(item);
+  const salesPeriod = formatProductSalesPeriod(item);
+  const unavailableByPeriod = salesStatus === "ended";
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-[0_10px_32px_rgba(54,65,48,0.06)]">
@@ -45,6 +52,16 @@ export default function ProductCard({ item }: ProductCardProps) {
             <span className="rounded-full bg-white/95 px-5 py-2 text-sm font-bold text-stone-800">
               売り切れ
             </span>
+          </div>
+        )}
+        {!soldOut && unavailableByPeriod && (
+          <div className="absolute inset-x-0 bottom-0 bg-stone-900/75 px-4 py-3 text-center text-sm font-semibold text-white">
+            {getProductSalesStatusLabel(salesStatus)}{salesPeriod ? ` ${salesPeriod}` : ""}
+          </div>
+        )}
+        {!soldOut && salesStatus === "not_started" && (
+          <div className="absolute inset-x-0 bottom-0 bg-green-900/85 px-4 py-3 text-center text-sm font-semibold text-white">
+            予約受付中{salesPeriod ? ` ${salesPeriod}` : ""}
           </div>
         )}
       </Link>

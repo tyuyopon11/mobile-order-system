@@ -1,11 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { isShopPubliclyAccessible } from "@/lib/shops/publication";
 import {
   auctionCutoffAt,
   auctionWeekday,
 } from "@/lib/orders/auction-dates";
+import { isAuctionDateWithinProductSalesPeriod, isProductInSalesPeriod } from "@/lib/products/sales-period";
+import { calculateLineAmount, calculateTotalUnits } from "@/lib/orders/amounts";
 
 export type CreateOrderInput = {
   productId: string;
@@ -228,7 +231,11 @@ export async function createOrder(
         id,
         quantity,
         irisu,
+        price,
         shop_id,
+        sales_period_enabled,
+        sales_start_date,
+        sales_end_date,
         shops (
           contact_email,
           published,
@@ -265,6 +272,9 @@ export async function createOrder(
       1,
       Math.trunc(Number(product.irisu ?? 1))
     );
+    const unitPrice = Number(product.price ?? 0);
+    const totalUnits = calculateTotalUnits(unitsPerSalesUnit, input.quantity);
+    const totalAmount = calculateLineAmount({ unitPrice, unitsPerSalesUnit, quantity: input.quantity });
 
     const shopRelation = Array.isArray(product.shops)
       ? product.shops[0]
@@ -275,6 +285,12 @@ export async function createOrder(
         success: false,
         message: "このショップは現在公開されていません。",
       };
+    }
+    if (!isProductInSalesPeriod(product)) {
+      return { success: false, message: "この商品は現在、販売期間外のため注文できません。" };
+    }
+    if (!isAuctionDateWithinProductSalesPeriod(product, deliveryDate)) {
+      return { success: false, message: "選択した納品希望日は、この商品の販売予定期間外です。" };
     }
     const auctionDate = new Date(`${deliveryDate}T00:00:00+09:00`);
     const auctionDay = auctionWeekday(deliveryDate);
@@ -373,7 +389,9 @@ export async function createOrder(
           irisu: unitsPerSalesUnit,
           sales_unit: salesUnit,
           units_per_sales_unit: unitsPerSalesUnit,
-          total_units: input.quantity * unitsPerSalesUnit,
+          total_units: totalUnits,
+          unit_price: unitPrice,
+          total_amount: totalAmount,
           status: "secured",
           cancelled: false,
           email,
@@ -396,6 +414,18 @@ export async function createOrder(
     if (insertError || !order) {
       console.error("Order insert error:", insertError);
 
+      const stockMatch = insertError?.message?.match(/INSUFFICIENT_STOCK:(\d+)/);
+      if (stockMatch) {
+        const remaining = Number(stockMatch[1]);
+        return {
+          success: false,
+          message:
+            remaining > 0
+              ? `現在注文できる数量は${remaining}ケースまでです。`
+              : "申し訳ありません。この商品は売り切れました。",
+        };
+      }
+
       return {
         success: false,
         message:
@@ -415,6 +445,9 @@ export async function createOrder(
         console.error("Order email queue insert error:", notificationError);
       }
     }
+
+    revalidatePath(`/platform/products/${productId}`);
+    revalidatePath(`/platform/order/${productId}`);
 
     return {
       success: true,

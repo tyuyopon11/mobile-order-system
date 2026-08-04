@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { requireShopAccess } from "@/lib/auth/shop-access";
 import { canPublishProduct } from "@/lib/products/publication";
+import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { setVendorProductPublished } from "../actions";
 
@@ -14,7 +15,7 @@ export default async function Page({
   const query = await searchParams;
   const { data } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,item_no,product_name,category,quantity,irisu,price,status,published,exhibition_images(id)")
+    .select("id,item_no,product_name,category,quantity,irisu,price,status,published,sales_period_enabled,sales_start_date,sales_end_date,exhibition_images(id)")
     .eq("shop_id", access.shopId)
     .order("created_at", { ascending: false });
 
@@ -50,6 +51,8 @@ export default async function Page({
             irisu: Number(product.irisu),
             price: Number(product.price),
           });
+          const salesPeriod = formatProductSalesPeriod(product);
+          const salesStatus = getProductSalesPeriodStatus(product);
           return (
             <article key={product.id} className="grid gap-4 p-5 md:grid-cols-[1fr_auto] md:items-center">
               <div>
@@ -57,6 +60,7 @@ export default async function Page({
                   <p className="font-semibold">{product.product_name || "商品名未入力"}</p>
                   <span className={`rounded-full px-3 py-1 text-xs font-medium ${product.published ? "bg-green-50 text-green-800" : "bg-stone-100 text-stone-600"}`}>{product.published ? "公開中" : "下書き"}</span>
                   {!ready && !product.published && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">公開準備中</span>}
+                  {salesPeriod && <span className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-800">{getProductSalesStatusLabel(salesStatus)}・{salesPeriod}</span>}
                 </div>
                 <p className="mt-2 text-xs leading-5 text-stone-500">No.{product.item_no}・1ケース{product.irisu}鉢入り・{Number(product.price ?? 0).toLocaleString()}円・販売可能 {product.quantity ?? 0}ケース</p>
               </div>

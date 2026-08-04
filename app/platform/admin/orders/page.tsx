@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
+import { resolveOrderAmount } from "@/lib/orders/amounts";
 
 type SearchParams = Promise<{
   orderNumber?: string;
@@ -29,6 +30,8 @@ type OrderRow = {
   contact_name: string | null;
   quantity: number | null;
   irisu: number;
+  unit_price: number | null;
+  total_amount: number | null;
   exhibition_items: ItemRow | ItemRow[] | null;
 };
 
@@ -76,7 +79,7 @@ export default async function ShopOrdersPage({
     .from("exhibition_orders")
     .select(`
       id,order_number,auction_date,ordered_at,buyer_no,branch_no,
-      buyer_name,contact_name,quantity,irisu,
+      buyer_name,contact_name,quantity,irisu,unit_price,total_amount,
       exhibition_items(
         item_no,product_name,price,shop_id,
         shops(shop_name)
@@ -186,7 +189,7 @@ export default async function ShopOrdersPage({
                   <tbody className="divide-y divide-stone-100">
                     {orders.map((order) => {
                       const item = one(order.exhibition_items);
-                      const amount = Number(order.quantity ?? 0) * Number(item?.price ?? 0);
+                      const amount = resolveOrderAmount({ savedAmount: order.total_amount, savedUnitPrice: order.unit_price, currentProductPrice: item?.price, unitsPerSalesUnit: order.irisu, quantity: order.quantity });
                       return (
                         <tr key={order.id} className="hover:bg-stone-50">
                           <td className="px-5 py-5">
@@ -216,7 +219,7 @@ export default async function ShopOrdersPage({
               <div className="divide-y divide-stone-100 lg:hidden">
                 {orders.map((order) => {
                   const item = one(order.exhibition_items);
-                  const amount = Number(order.quantity ?? 0) * Number(item?.price ?? 0);
+                  const amount = resolveOrderAmount({ savedAmount: order.total_amount, savedUnitPrice: order.unit_price, currentProductPrice: item?.price, unitsPerSalesUnit: order.irisu, quantity: order.quantity });
                   return (
                     <article key={order.id} className="p-5 sm:p-6">
                       <div className="flex items-start justify-between gap-4">

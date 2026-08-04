@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { resolveOrderAmount } from "@/lib/orders/amounts";
 
 type GroupedOrder = {
   buyerKey: string;
@@ -26,6 +27,9 @@ export default async function ExhibitionOrdersPage() {
       buyer_name,
       contact,
       quantity,
+      irisu,
+      unit_price,
+      total_amount,
       status,
       ordered_at,
       exhibition_items (
@@ -73,7 +77,7 @@ export default async function ExhibitionOrdersPage() {
     const item = order.exhibition_items;
     const price = Number(item?.price ?? 0);
     const quantity = Number(order.quantity ?? 1);
-    const amount = price * quantity;
+    const amount = resolveOrderAmount({ savedAmount: order.total_amount, savedUnitPrice: order.unit_price, currentProductPrice: price, unitsPerSalesUnit: order.irisu, quantity });
     const inputCompleted = item?.input_completed === true;
 
     if (!groupedMap.has(buyerKey)) {

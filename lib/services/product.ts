@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { calculateAvailableCases } from "@/lib/products/inventory";
 import {
   isShopPubliclyAccessible,
   SHOP_PUBLICATION_COLUMN,
@@ -84,7 +85,7 @@ function mapProduct(
     tree_shape: nullableText(item.tree_shape),
     pot_size: nullableText(item.pot_size),
 
-    quantity: nullableNumber(item.quantity),
+    quantity: calculateAvailableCases(item.quantity, item.exhibition_orders),
     price: nullableNumber(item.price),
     irisu: Math.max(
       1,
@@ -103,6 +104,9 @@ function mapProduct(
           1
       )
     ),
+    sales_period_enabled: item.sales_period_enabled === true,
+    sales_start_date: nullableText(item.sales_start_date),
+    sales_end_date: nullableText(item.sales_end_date),
 
     origin: nullableText(item.origin),
     producer: nullableText(item.producer),
@@ -135,7 +139,7 @@ export async function getShopItems(
 ) {
   console.log("★★★★ shopId =", shopId);
 
-  const supabase = await createClient();
+  const supabase = supabaseAdmin;
 
   const { data: publicShop, error: shopError } = await supabase
     .from("shops")
@@ -178,6 +182,9 @@ export async function getShopItems(
         irisu,
         sales_unit,
         units_per_sales_unit,
+        sales_period_enabled,
+        sales_start_date,
+        sales_end_date,
         origin,
         producer,
         staff,
@@ -187,6 +194,11 @@ export async function getShopItems(
           id,
           image_url,
           sort_order
+        ),
+        exhibition_orders (
+          quantity,
+          status,
+          cancelled
         )
       `,
       {
@@ -228,7 +240,7 @@ export async function getShopItems(
 export async function getProduct(
   id: string
 ): Promise<Product> {
-  const supabase = await createClient();
+  const supabase = supabaseAdmin;
 
   const { data, error } = await supabase
     .from("exhibition_items")
@@ -248,6 +260,9 @@ export async function getProduct(
         irisu,
         sales_unit,
         units_per_sales_unit,
+        sales_period_enabled,
+        sales_start_date,
+        sales_end_date,
         origin,
         producer,
         staff,
@@ -257,6 +272,11 @@ export async function getProduct(
           id,
           image_url,
           sort_order
+        ),
+        exhibition_orders (
+          quantity,
+          status,
+          cancelled
         ),
         shops (
           id,

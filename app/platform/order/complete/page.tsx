@@ -9,6 +9,17 @@ type OrderCompletePageProps = {
   }>;
 };
 
+type CompleteOrderRow = {
+  exhibition_items:
+    | { shops: { slug: string | null } | { slug: string | null }[] | null }
+    | { shops: { slug: string | null } | { slug: string | null }[] | null }[]
+    | null;
+};
+
+function first<T>(value: T | T[] | null): T | null {
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
+
 export default async function OrderCompletePage({
   searchParams,
 }: OrderCompletePageProps) {
@@ -27,6 +38,18 @@ export default async function OrderCompletePage({
   if (!orderId) {
     redirect("/platform");
   }
+
+  const orderQuery = supabase
+    .from("exhibition_orders")
+    .select("exhibition_items(shops(slug))");
+  const numericOrderId = /^\d+$/.test(orderId);
+  const { data: order } = numericOrderId
+    ? await orderQuery.eq("id", orderId).maybeSingle()
+    : await orderQuery.eq("order_number", orderId).maybeSingle();
+  const typedOrder = order as unknown as CompleteOrderRow | null;
+  const item = first(typedOrder?.exhibition_items ?? null);
+  const shop = first(item?.shops ?? null);
+  const shopHref = shop?.slug ? `/platform/shops/${shop.slug}` : "/platform";
 
   return (
     <main className="min-h-screen bg-[#f5f4ef] px-5 py-10 sm:px-8 sm:py-16">
@@ -69,7 +92,7 @@ export default async function OrderCompletePage({
             </Link>
 
             <Link
-              href="/platform/shops"
+              href={shopHref}
               className="rounded-full bg-green-800 px-6 py-4 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(22,101,52,0.18)] transition hover:bg-green-900"
             >
               ショップを見る

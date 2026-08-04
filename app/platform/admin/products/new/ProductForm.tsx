@@ -12,6 +12,7 @@ import {
   SALES_UNITS,
 } from "@/lib/products/sales-unit";
 import { PRODUCT_CATEGORIES } from "@/lib/products/categories";
+import ProductSalesPeriodField from "@/components/product/ProductSalesPeriodField";
 
 type ShopOption = {
   id: string;
@@ -304,6 +305,9 @@ export default function ProductForm({ shops }: { shops: ShopOption[] }) {
           ))}
         </div>
       </fieldset>
+
+      <ProductSalesPeriodField />
+      <FieldError message={state.fieldErrors.salesPeriod} />
 
       <div className="flex flex-col gap-3 rounded-2xl border border-stone-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-around">
         <label className="flex cursor-pointer items-center gap-3 text-sm">

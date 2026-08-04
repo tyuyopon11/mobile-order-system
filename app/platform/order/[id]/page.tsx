@@ -14,6 +14,7 @@ import {
   todayInTokyo,
 } from "@/lib/orders/auction-dates";
 import OrderForm from "./OrderForm";
+import { isAuctionDateWithinProductSalesPeriod, isProductInSalesPeriod } from "@/lib/products/sales-period";
 
 type OrderPageProps = {
   params: Promise<{
@@ -118,13 +119,19 @@ export default async function OrderPage({
   if (!product) {
     notFound();
   }
-  const { data: auctionDateRows, error: auctionDatesError } = await supabase
+  let auctionDatesQuery = supabase
     .from("auction_dates")
     .select("auction_date")
     .eq("is_active", true)
-    .gte("auction_date", todayInTokyo())
+    .gte("auction_date", todayInTokyo());
+
+  if (product.sales_period_enabled && product.sales_end_date) {
+    auctionDatesQuery = auctionDatesQuery.lte("auction_date", product.sales_end_date);
+  }
+
+  const { data: auctionDateRows, error: auctionDatesError } = await auctionDatesQuery
     .order("auction_date", { ascending: true })
-    .limit(60);
+    .limit(500);
 
   if (auctionDatesError) {
     console.error(
@@ -138,19 +145,21 @@ export default async function OrderPage({
       ? auctionDateRows.map((row) => String(row.auction_date))
       : generateFallbackAuctionDates();
 
-  const allowedAuctionDates = configuredDates.filter((date) =>
-    isShopAuctionDate(date, {
-      orderingEnabled: product.shop.ordering_enabled,
-      acceptsTuesday: product.shop.accepts_tuesday,
-      acceptsSaturday: product.shop.accepts_saturday,
-      cutoffHours: product.shop.order_cutoff_hours,
-    })
+  const allowedAuctionDates = configuredDates.filter(
+    (date) =>
+      isAuctionDateWithinProductSalesPeriod(product, date) &&
+      isShopAuctionDate(date, {
+        orderingEnabled: product.shop.ordering_enabled,
+        acceptsTuesday: product.shop.accepts_tuesday,
+        acceptsSaturday: product.shop.accepts_saturday,
+        cutoffHours: product.shop.order_cutoff_hours,
+      })
   );
 
   const isSoldOut =
     product.quantity !== null && product.quantity <= 0;
 
-  if (isSoldOut) {
+  if (isSoldOut || !isProductInSalesPeriod(product)) {
     redirect(`/platform/products/${product.id}`);
   }
 

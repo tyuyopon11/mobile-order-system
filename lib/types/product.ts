@@ -33,6 +33,9 @@ export type Product = {
   irisu: number;
   sales_unit: string;
   units_per_sales_unit: number;
+  sales_period_enabled: boolean;
+  sales_start_date: string | null;
+  sales_end_date: string | null;
 
   origin: string | null;
   producer: string | null;

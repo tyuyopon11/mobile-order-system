@@ -61,6 +61,9 @@ export default async function EditProductPage({
           status,
           published,
           is_featured,
+          sales_period_enabled,
+          sales_start_date,
+          sales_end_date,
           exhibition_images (
             id,
             image_url,

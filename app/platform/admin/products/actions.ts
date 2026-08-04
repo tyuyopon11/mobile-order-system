@@ -12,6 +12,7 @@ import { isProductCategory } from "@/lib/products/categories";
 import {
   isSalesUnit,
 } from "@/lib/products/sales-unit";
+import { parseProductSalesPeriod, validateProductSalesPeriod } from "@/lib/products/sales-period";
 
 export type ProductFieldErrors = Partial<
   Record<
@@ -23,7 +24,8 @@ export type ProductFieldErrors = Partial<
     | "price"
     | "salesUnit"
     | "unitsPerSalesUnit"
-    | "status",
+    | "status"
+    | "salesPeriod",
     string
   >
 >;
@@ -88,8 +90,11 @@ export async function createProduct(
   const status = String(formData.get("status") ?? "preparing");
   const published = formData.get("published") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
+  const salesPeriod = parseProductSalesPeriod(formData);
   const fieldErrors: ProductFieldErrors = {};
   let itemNo = itemNoText === "" ? null : Number(itemNoText);
+  const salesPeriodError = validateProductSalesPeriod(salesPeriod);
+  if (salesPeriodError) fieldErrors.salesPeriod = salesPeriodError;
 
   if (!shopId) {
     fieldErrors.shopId = "ショップを選択してください。";
@@ -199,6 +204,7 @@ export async function createProduct(
   const { data: createdProduct, error } = await supabaseAdmin
     .from("exhibition_items")
     .insert({
+      ...salesPeriod,
       shop_id: shopId,
       item_no: itemNo,
       product_name: productName,
@@ -263,6 +269,7 @@ export async function updateProduct(
   }
 
   const productId = String(formData.get("productId") ?? "").trim();
+  const salesPeriod = parseProductSalesPeriod(formData);
   const shopId = String(formData.get("shopId") ?? "").trim();
   const itemNo = Number(String(formData.get("itemNo") ?? "").trim());
   const productName = String(formData.get("productName") ?? "").trim();
@@ -289,6 +296,8 @@ export async function updateProduct(
   const published = formData.get("published") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   const fieldErrors: ProductFieldErrors = {};
+  const salesPeriodError = validateProductSalesPeriod(salesPeriod);
+  if (salesPeriodError) fieldErrors.salesPeriod = salesPeriodError;
 
   if (!productId) {
     return {
@@ -407,6 +416,7 @@ export async function updateProduct(
   const { error } = await supabaseAdmin
     .from("exhibition_items")
     .update({
+      ...salesPeriod,
       shop_id: shopId,
       item_no: itemNo,
       product_name: productName,

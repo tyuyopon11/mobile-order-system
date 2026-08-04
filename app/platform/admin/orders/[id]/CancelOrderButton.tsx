@@ -1,0 +1,38 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { cancelOrder } from "./actions";
+
+export default function CancelOrderButton({ orderId, orderNumber, isCancelled }: {
+  orderId: string;
+  orderNumber: string;
+  isCancelled: boolean;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState("");
+
+  if (isCancelled) {
+    return <span className="inline-flex items-center rounded-xl bg-stone-100 px-5 py-3 text-sm font-semibold text-stone-500">キャンセル済み</span>;
+  }
+
+  function handleCancel() {
+    if (!window.confirm(`この注文をキャンセルしますか？\n\n注文番号：${orderNumber}\n\nキャンセルすると、この注文で確保していた在庫が販売可能数へ戻ります。`)) return;
+    setMessage("");
+    startTransition(async () => {
+      const result = await cancelOrder(orderId);
+      setMessage(result.message);
+      if (result.success) router.refresh();
+    });
+  }
+
+  return (
+    <div>
+      <button type="button" onClick={handleCancel} disabled={isPending} className="rounded-xl border border-red-300 bg-white px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:border-stone-200 disabled:text-stone-400">
+        {isPending ? "キャンセル処理中…" : "注文をキャンセル"}
+      </button>
+      {message ? <p className="mt-2 max-w-xs text-sm leading-6 text-stone-600" role="status">{message}</p> : null}
+    </div>
+  );
+}

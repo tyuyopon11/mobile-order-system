@@ -6,6 +6,7 @@ import {
   formatSalesUnitQuantity,
   formatUnitsPerSalesUnit,
 } from "@/lib/products/sales-unit";
+import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
 
 import ProductQuickActions from "./ProductQuickActions";
 
@@ -44,6 +45,9 @@ type ProductRow = {
   status: "preparing" | "selling" | "sold";
   published: boolean;
   is_featured: boolean;
+  sales_period_enabled: boolean;
+  sales_start_date: string | null;
+  sales_end_date: string | null;
   display_order: number;
   updated_at: string;
   shops: { shop_name: string; slug: string } | null;
@@ -165,6 +169,9 @@ export default async function AdminProductsPage({
         status,
         published,
         is_featured,
+        sales_period_enabled,
+        sales_start_date,
+        sales_end_date,
         display_order,
         updated_at,
         shops (
@@ -396,6 +403,11 @@ export default async function AdminProductsPage({
                           {product.is_featured && (
                             <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
                               おすすめ
+                            </span>
+                          )}
+                          {formatProductSalesPeriod(product) && (
+                            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800">
+                              {getProductSalesStatusLabel(getProductSalesPeriodStatus(product))}・{formatProductSalesPeriod(product)}
                             </span>
                           )}
                         </div>

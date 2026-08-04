@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isProductInSalesPeriod } from "@/lib/products/sales-period";
+import { calculateLineAmount, calculateTotalUnits } from "@/lib/orders/amounts";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -33,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data: item, error: itemError } = await supabase
     .from("exhibition_items")
-    .select("id, status")
+    .select("id,status,price,irisu,sales_period_enabled,sales_start_date,sales_end_date")
     .eq("id", Number(itemId))
     .single();
 
@@ -45,6 +47,10 @@ export async function POST(request: Request) {
     return NextResponse.redirect(buildRedirectUrl("error", "sold"));
   }
 
+  if (!isProductInSalesPeriod(item)) {
+    return NextResponse.redirect(buildRedirectUrl("error", "sales_period"));
+  }
+
   const { error: orderError } = await supabase.from("exhibition_orders").insert({
     item_id: Number(itemId),
     buyer_no: buyerNo,
@@ -52,6 +58,11 @@ export async function POST(request: Request) {
     buyer_name: buyerName,
     contact,
     quantity: 1,
+    irisu: Number(item.irisu ?? 1),
+    units_per_sales_unit: Number(item.irisu ?? 1),
+    total_units: calculateTotalUnits(Number(item.irisu ?? 1), 1),
+    unit_price: Number(item.price ?? 0),
+    total_amount: calculateLineAmount({ unitPrice: Number(item.price ?? 0), unitsPerSalesUnit: Number(item.irisu ?? 1), quantity: 1 }),
     status: "secured",
   });
 

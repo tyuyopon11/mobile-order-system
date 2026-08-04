@@ -42,3 +42,8 @@ next-env.d.ts
 
 .vercel
 .env*.local
+# 先取り植物市場 ロゴ試作品4兄弟 Git乗車禁止
+public/logos/sakidori-market/sakidori-logo2.png
+public/logos/sakidori-market/sakidori-logo3.png
+public/logos/sakidori-market/sakidori-logo4.png
+public/logos/sakidori-market/sakidori-logo5.png

@@ -57,6 +57,7 @@ export default async function EditProductPage({
           producer,
           staff,
           comment,
+          pickup_comment,
           jf_code,
           status,
           published,
@@ -64,6 +65,9 @@ export default async function EditProductPage({
           sales_period_enabled,
           sales_start_date,
           sales_end_date,
+          reservation_period_enabled,
+          reservation_start_date,
+          reservation_end_date,
           exhibition_images (
             id,
             image_url,

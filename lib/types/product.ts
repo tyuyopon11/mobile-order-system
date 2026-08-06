@@ -36,12 +36,16 @@ export type Product = {
   sales_period_enabled: boolean;
   sales_start_date: string | null;
   sales_end_date: string | null;
+  reservation_period_enabled: boolean;
+  reservation_start_date: string | null;
+  reservation_end_date: string | null;
 
   origin: string | null;
   producer: string | null;
   staff: string | null;
 
   comment: string | null;
+  pickup_comment: string | null;
   jf_code: string | null;
 
   image: string | null;

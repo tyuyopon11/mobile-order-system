@@ -5,6 +5,7 @@ import {
   getSalesUnitLabel,
 } from "@/lib/products/sales-unit";
 import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
+import { formatProductReservationPeriod, getProductReservationStatus, getProductReservationStatusLabel } from "@/lib/products/reservation-period";
 
 type ProductInfoProps = {
   product: Product;
@@ -27,6 +28,8 @@ function isTakashimayaShop(shopName: string, slug: string) {
 export default function ProductInfo({ product }: ProductInfoProps) {
   const salesPeriod = formatProductSalesPeriod(product);
   const salesPeriodStatus = getProductSalesPeriodStatus(product);
+  const reservationPeriod = formatProductReservationPeriod(product);
+  const reservationStatus = getProductReservationStatus(product);
   const isTakashimaya = isTakashimayaShop(
     product.shop.shop_name,
     product.shop.slug
@@ -82,20 +85,35 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
       <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_12px_35px_rgba(54,65,48,0.06)] sm:p-8">
         <p className="text-xs font-semibold tracking-[0.24em] text-green-800">
-          SELECTED REASON
+          PRODUCT DESCRIPTION
         </p>
 
         <h2 className="mt-3 text-xl font-semibold text-stone-900 sm:text-2xl">
-          🌿 選んだ理由
+          商品説明
         </h2>
 
         <div className="mt-5 h-px w-12 bg-green-800" />
 
         <p className="mt-5 whitespace-pre-wrap text-sm leading-8 text-stone-600 sm:text-base">
           {product.comment ||
-            "この一鉢を選んだ理由をご紹介します。"}
+            "商品説明は準備中です。"}
         </p>
       </section>
+
+      {product.pickup_comment && (
+        <section className="rounded-[1.75rem] border border-green-100 bg-green-50/50 p-6 shadow-[0_12px_35px_rgba(54,65,48,0.05)] sm:p-8">
+          <p className="text-xs font-semibold tracking-[0.24em] text-green-800">
+            PICKUP COMMENT
+          </p>
+          <h2 className="mt-3 text-xl font-semibold text-stone-900 sm:text-2xl">
+            この商品を選んだ理由
+          </h2>
+          <div className="mt-5 h-px w-12 bg-green-800" />
+          <p className="mt-5 whitespace-pre-wrap text-sm leading-8 text-stone-600 sm:text-base">
+            {product.pickup_comment}
+          </p>
+        </section>
+      )}
 
       {hasPlantInformation && (
         <section className="rounded-[1.75rem] border border-stone-200 bg-white p-6 shadow-[0_12px_35px_rgba(54,65,48,0.05)] sm:p-8">
@@ -206,6 +224,15 @@ export default function ProductInfo({ product }: ProductInfoProps) {
               </dd>
             </div>
           </dl>
+        </section>
+      )}
+
+      {reservationPeriod && (
+        <section className="rounded-[1.75rem] border border-amber-100 bg-amber-50/50 p-6 sm:p-8">
+          <p className="text-xs font-semibold tracking-[0.24em] text-amber-800">RESERVATION PERIOD</p>
+          <h2 className="mt-3 text-xl font-semibold text-stone-900">予約受付期間</h2>
+          <p className="mt-4 text-base font-medium text-stone-800">{reservationPeriod}</p>
+          <p className="mt-2 text-sm font-semibold text-amber-800">{getProductReservationStatusLabel(reservationStatus)}</p>
         </section>
       )}
 

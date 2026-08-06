@@ -7,6 +7,7 @@ import PurchaseCard from "@/components/PurchaseCard";
 import ShopCard from "@/components/ShopCard";
 import { getProduct } from "@/lib/services/product";
 import { getProductSalesPeriodStatus, getProductSalesStatusLabel, isProductInSalesPeriod } from "@/lib/products/sales-period";
+import { getProductReservationStatus, getProductReservationStatusLabel, isProductReservationOpen } from "@/lib/products/reservation-period";
 
 type Props = {
   params: Promise<{
@@ -22,6 +23,9 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
   const salesStatus = getProductSalesPeriodStatus(product);
+  const reservationStatus = getProductReservationStatus(product);
+  const salesAvailable = isProductInSalesPeriod(product);
+  const reservationAvailable = isProductReservationOpen(product);
 
   return (
     <main className="min-h-screen bg-[#f4f0e8] text-[#25342c]">
@@ -48,8 +52,14 @@ export default async function ProductPage({ params }: Props) {
               productId={String(product.id)}
               quantity={product.quantity}
               shopSlug={product.shop.slug}
-              salesAvailable={isProductInSalesPeriod(product)}
-              salesStatusLabel={getProductSalesStatusLabel(salesStatus)}
+              salesAvailable={salesAvailable && reservationAvailable}
+              salesStatusLabel={
+                !salesAvailable
+                  ? "販売終了"
+                  : product.reservation_period_enabled
+                    ? getProductReservationStatusLabel(reservationStatus)
+                    : getProductSalesStatusLabel(salesStatus)
+              }
             />
 
             <ShopCard shop={product.shop} />

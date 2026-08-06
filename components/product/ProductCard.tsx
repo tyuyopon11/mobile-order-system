@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { Product } from "@/lib/types/product";
 import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
+import { formatProductReservationPeriod, getProductReservationStatus, getProductReservationStatusLabel } from "@/lib/products/reservation-period";
 
 type ProductCardProps = {
   item: Pick<
@@ -19,6 +20,9 @@ type ProductCardProps = {
     | "sales_period_enabled"
     | "sales_start_date"
     | "sales_end_date"
+    | "reservation_period_enabled"
+    | "reservation_start_date"
+    | "reservation_end_date"
   >;
 };
 
@@ -27,6 +31,8 @@ export default function ProductCard({ item }: ProductCardProps) {
   const salesStatus = getProductSalesPeriodStatus(item);
   const salesPeriod = formatProductSalesPeriod(item);
   const unavailableByPeriod = salesStatus === "ended";
+  const reservationStatus = getProductReservationStatus(item);
+  const reservationPeriod = formatProductReservationPeriod(item);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white shadow-[0_10px_32px_rgba(54,65,48,0.06)]">
@@ -64,6 +70,11 @@ export default function ProductCard({ item }: ProductCardProps) {
             予約受付中{salesPeriod ? ` ${salesPeriod}` : ""}
           </div>
         )}
+        {!soldOut && !unavailableByPeriod && reservationStatus !== "unrestricted" && reservationStatus !== "active" && (
+          <div className="absolute inset-x-0 bottom-0 bg-amber-900/85 px-4 py-3 text-center text-sm font-semibold text-white">
+            {getProductReservationStatusLabel(reservationStatus)}
+          </div>
+        )}
       </Link>
 
       <div className="flex flex-1 flex-col p-5">
@@ -79,6 +90,14 @@ export default function ProductCard({ item }: ProductCardProps) {
         <p className="mt-4 rounded-xl bg-green-50 px-3 py-2 text-sm font-medium text-green-900">
           1ケース{item.irisu}鉢入り
         </p>
+
+        {(reservationPeriod || salesPeriod) && (
+          <dl className="mt-4 space-y-2 rounded-xl border border-stone-100 bg-stone-50 px-3 py-3 text-xs">
+            {reservationPeriod && <div className="flex justify-between gap-3"><dt className="text-stone-400">予約受付</dt><dd className="font-medium text-stone-700">{reservationPeriod}</dd></div>}
+            {reservationPeriod && <div className="flex justify-between gap-3"><dt className="text-stone-400">状態</dt><dd className="font-semibold text-green-800">{getProductReservationStatusLabel(reservationStatus)}</dd></div>}
+            {salesPeriod && <div className="flex justify-between gap-3"><dt className="text-stone-400">販売予定</dt><dd className="font-medium text-stone-700">{salesPeriod}</dd></div>}
+          </dl>
+        )}
 
         <div className="mt-4 border-t border-stone-100 pt-4">
           <p className="text-xs text-stone-400">販売価格（税抜）</p>

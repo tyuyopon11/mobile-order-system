@@ -13,6 +13,7 @@ import {
   isSalesUnit,
 } from "@/lib/products/sales-unit";
 import { parseProductSalesPeriod, validateProductSalesPeriod } from "@/lib/products/sales-period";
+import { parseProductReservationPeriod, validateProductReservationPeriod } from "@/lib/products/reservation-period";
 
 export type ProductFieldErrors = Partial<
   Record<
@@ -25,6 +26,8 @@ export type ProductFieldErrors = Partial<
     | "salesUnit"
     | "unitsPerSalesUnit"
     | "status"
+    | "pickupComment"
+    | "reservationPeriod"
     | "salesPeriod",
     string
   >
@@ -79,6 +82,7 @@ export async function createProduct(
   const producer = optionalText(formData, "producer");
   const staff = optionalText(formData, "staff");
   const comment = optionalText(formData, "comment");
+  const pickupComment = optionalText(formData, "pickupComment");
   const jfCode = optionalText(formData, "jfCode");
   const quantity = optionalNumber(formData, "quantity");
   const price = optionalNumber(formData, "price");
@@ -91,10 +95,16 @@ export async function createProduct(
   const published = formData.get("published") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   const salesPeriod = parseProductSalesPeriod(formData);
+  const reservationPeriod = parseProductReservationPeriod(formData);
   const fieldErrors: ProductFieldErrors = {};
+  if (pickupComment && pickupComment.length > 500) {
+    fieldErrors.pickupComment = "先取りコメントは500文字以内で入力してください。";
+  }
   let itemNo = itemNoText === "" ? null : Number(itemNoText);
   const salesPeriodError = validateProductSalesPeriod(salesPeriod);
   if (salesPeriodError) fieldErrors.salesPeriod = salesPeriodError;
+  const reservationPeriodError = validateProductReservationPeriod(reservationPeriod);
+  if (reservationPeriodError) fieldErrors.reservationPeriod = reservationPeriodError;
 
   if (!shopId) {
     fieldErrors.shopId = "ショップを選択してください。";
@@ -205,6 +215,7 @@ export async function createProduct(
     .from("exhibition_items")
     .insert({
       ...salesPeriod,
+      ...reservationPeriod,
       shop_id: shopId,
       item_no: itemNo,
       product_name: productName,
@@ -224,6 +235,7 @@ export async function createProduct(
       producer,
       staff,
       comment,
+      pickup_comment: pickupComment,
       jf_code: jfCode,
       status,
       input_completed: false,
@@ -270,6 +282,7 @@ export async function updateProduct(
 
   const productId = String(formData.get("productId") ?? "").trim();
   const salesPeriod = parseProductSalesPeriod(formData);
+  const reservationPeriod = parseProductReservationPeriod(formData);
   const shopId = String(formData.get("shopId") ?? "").trim();
   const itemNo = Number(String(formData.get("itemNo") ?? "").trim());
   const productName = String(formData.get("productName") ?? "").trim();
@@ -284,6 +297,7 @@ export async function updateProduct(
   const producer = optionalText(formData, "producer");
   const staff = optionalText(formData, "staff");
   const comment = optionalText(formData, "comment");
+  const pickupComment = optionalText(formData, "pickupComment");
   const jfCode = optionalText(formData, "jfCode");
   const quantity = optionalNumber(formData, "quantity");
   const price = optionalNumber(formData, "price");
@@ -296,8 +310,13 @@ export async function updateProduct(
   const published = formData.get("published") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   const fieldErrors: ProductFieldErrors = {};
+  if (pickupComment && pickupComment.length > 500) {
+    fieldErrors.pickupComment = "先取りコメントは500文字以内で入力してください。";
+  }
   const salesPeriodError = validateProductSalesPeriod(salesPeriod);
   if (salesPeriodError) fieldErrors.salesPeriod = salesPeriodError;
+  const reservationPeriodError = validateProductReservationPeriod(reservationPeriod);
+  if (reservationPeriodError) fieldErrors.reservationPeriod = reservationPeriodError;
 
   if (!productId) {
     return {
@@ -417,6 +436,7 @@ export async function updateProduct(
     .from("exhibition_items")
     .update({
       ...salesPeriod,
+      ...reservationPeriod,
       shop_id: shopId,
       item_no: itemNo,
       product_name: productName,
@@ -436,6 +456,7 @@ export async function updateProduct(
       producer,
       staff,
       comment,
+      pickup_comment: pickupComment,
       jf_code: jfCode,
       status,
       published,

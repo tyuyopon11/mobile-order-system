@@ -15,6 +15,7 @@ import {
 } from "@/lib/orders/auction-dates";
 import OrderForm from "./OrderForm";
 import { isAuctionDateWithinProductSalesPeriod, isProductInSalesPeriod } from "@/lib/products/sales-period";
+import { isProductReservationOpen } from "@/lib/products/reservation-period";
 
 type OrderPageProps = {
   params: Promise<{
@@ -159,7 +160,7 @@ export default async function OrderPage({
   const isSoldOut =
     product.quantity !== null && product.quantity <= 0;
 
-  if (isSoldOut || !isProductInSalesPeriod(product)) {
+  if (isSoldOut || !isProductInSalesPeriod(product) || !isProductReservationOpen(product)) {
     redirect(`/platform/products/${product.id}`);
   }
 

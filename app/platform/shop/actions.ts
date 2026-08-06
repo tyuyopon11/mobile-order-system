@@ -8,6 +8,7 @@ import { isProductCategory } from "@/lib/products/categories";
 import { uploadProductImage } from "@/lib/products/images";
 import { getProductPublicationErrors } from "@/lib/products/publication";
 import { parseProductSalesPeriod, validateProductSalesPeriod } from "@/lib/products/sales-period";
+import { parseProductReservationPeriod, validateProductReservationPeriod } from "@/lib/products/reservation-period";
 import { saveShopLogo } from "@/lib/shops/images";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -61,8 +62,15 @@ export async function createVendorProduct(formData: FormData) {
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
   const imageFile = formData.get("imageFile");
-  const salesPeriod = parseProductSalesPeriod(formData);
+  const salesPeriod = {
+    ...parseProductSalesPeriod(formData),
+    ...parseProductReservationPeriod(formData),
+    pickup_comment: String(formData.get("pickupComment") ?? "").trim() || null,
+  };
   const salesPeriodError = validateProductSalesPeriod(salesPeriod);
+  const reservationPeriodError = validateProductReservationPeriod(salesPeriod);
+  if (reservationPeriodError) redirect(`/platform/shop/products/new?error=${encodeURIComponent(reservationPeriodError)}`);
+  if (salesPeriod.pickup_comment && salesPeriod.pickup_comment.length > 500) redirect("/platform/shop/products/new?error=先取りコメントは500文字以内で入力してください。");
   if (salesPeriodError) redirect(`/platform/shop/products/new?error=${encodeURIComponent(salesPeriodError)}`);
   if (category && !isProductCategory(category)) {
     redirect("/platform/shop/products/new?error=カテゴリーは一覧から選択してください。");
@@ -108,8 +116,15 @@ export async function saveVendorProductDetails(formData: FormData) {
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
   const imageFile = formData.get("imageFile");
-  const salesPeriod = parseProductSalesPeriod(formData);
+  const salesPeriod = {
+    ...parseProductSalesPeriod(formData),
+    ...parseProductReservationPeriod(formData),
+    pickup_comment: String(formData.get("pickupComment") ?? "").trim() || null,
+  };
   const salesPeriodError = validateProductSalesPeriod(salesPeriod);
+  const reservationPeriodError = validateProductReservationPeriod(salesPeriod);
+  if (reservationPeriodError) redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent(reservationPeriodError)}`);
+  if (salesPeriod.pickup_comment && salesPeriod.pickup_comment.length > 500) redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent("先取りコメントは500文字以内で入力してください。")}`);
   if (salesPeriodError) redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent(salesPeriodError)}`);
   if (category && !isProductCategory(category) && category !== product.category) {
     redirect(`/platform/shop/products/${productId}?error=${encodeURIComponent("カテゴリーは一覧から選択してください。")}`);

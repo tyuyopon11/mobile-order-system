@@ -8,6 +8,7 @@ import {
   auctionWeekday,
 } from "@/lib/orders/auction-dates";
 import { isAuctionDateWithinProductSalesPeriod, isProductInSalesPeriod } from "@/lib/products/sales-period";
+import { getProductReservationStatusLabel, getProductReservationStatus, isProductReservationOpen } from "@/lib/products/reservation-period";
 import { calculateLineAmount, calculateTotalUnits } from "@/lib/orders/amounts";
 
 export type CreateOrderInput = {
@@ -236,6 +237,9 @@ export async function createOrder(
         sales_period_enabled,
         sales_start_date,
         sales_end_date,
+        reservation_period_enabled,
+        reservation_start_date,
+        reservation_end_date,
         shops (
           contact_email,
           published,
@@ -288,6 +292,12 @@ export async function createOrder(
     }
     if (!isProductInSalesPeriod(product)) {
       return { success: false, message: "この商品は現在、販売期間外のため注文できません。" };
+    }
+    if (!isProductReservationOpen(product)) {
+      return {
+        success: false,
+        message: getProductReservationStatusLabel(getProductReservationStatus(product)),
+      };
     }
     if (!isAuctionDateWithinProductSalesPeriod(product, deliveryDate)) {
       return { success: false, message: "選択した納品希望日は、この商品の販売予定期間外です。" };

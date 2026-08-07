@@ -63,6 +63,39 @@ export async function GET(
 
     const ws = workbook.worksheets[0];
 
+    // ExcelJS keeps shared-formula clones linked to their master cell. Some of
+    // the cells populated below (for example HF13) are shared-formula masters;
+    // overwriting one would leave the remaining clones without a master and
+    // make writeBuffer() fail. Resolve every clone first, then replace it with
+    // an equivalent standalone formula so later value writes are safe.
+    const sharedFormulaCells: Array<{
+      cell: ExcelJS.Cell;
+      formula: string;
+      result: number | string | Date;
+    }> = [];
+
+    ws.eachRow({ includeEmpty: false }, (row) => {
+      row.eachCell({ includeEmpty: false }, (cell) => {
+        const value = cell.value;
+
+        if (
+          value &&
+          typeof value === "object" &&
+          "sharedFormula" in value
+        ) {
+          sharedFormulaCells.push({
+            cell,
+            formula: cell.formula,
+            result: cell.result,
+          });
+        }
+      });
+    });
+
+    for (const { cell, formula, result } of sharedFormulaCells) {
+      cell.value = { formula, result };
+    }
+
     ws.getCell("A6").value = order.buyer_name || "";
     ws.getCell("HO6").value = order.inputter_name || "";
 

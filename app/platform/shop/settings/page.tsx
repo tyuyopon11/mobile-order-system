@@ -1,6 +1,7 @@
 import ShopLogoField from "@/components/forms/ShopLogoField";
 import { requireShopAccess } from "@/lib/auth/shop-access";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 import { updateVendorShop } from "../actions";
 
 export default async function Page({
@@ -8,13 +9,17 @@ export default async function Page({
 }: {
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
+  const totalStartedAt = startMission25Perf();
   const access = await requireShopAccess();
   const query = await searchParams;
+  const settingsStartedAt = startMission25Perf();
   const { data: shop } = await supabaseAdmin
     .from("shops")
     .select("shop_name,slug,short_description,description,announcement,ordering_enabled,accepts_tuesday,accepts_saturday,order_cutoff_hours,logo_url")
     .eq("id", access.shopId)
     .single();
+  logMission25Perf("page.settings.db", settingsStartedAt);
+  logMission25Perf("page.settings.total", totalStartedAt);
   if (!shop) return <p>ショップ情報を取得できませんでした。</p>;
   const input = "mt-2 w-full rounded-xl border border-stone-300 px-4 py-3";
 

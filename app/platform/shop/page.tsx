@@ -1,15 +1,19 @@
 import { requireShopAccess } from "@/lib/auth/shop-access";
 import { resolveOrderAmount } from "@/lib/orders/amounts";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 
 export default async function Page() {
+  const totalStartedAt = startMission25Perf();
   const access = await requireShopAccess();
   const today = new Date().toISOString().slice(0, 10);
   const week = new Date(Date.now() - 6 * 86400000).toISOString();
+  const ordersStartedAt = startMission25Perf();
   const { data: items } = await supabaseAdmin
     .from("exhibition_items")
     .select("price,exhibition_orders(id,quantity,irisu,unit_price,total_amount,ordered_at,cancelled)")
     .eq("shop_id", access.shopId);
+  logMission25Perf("page.dashboard.products_orders", ordersStartedAt);
   const orders = (items ?? [])
     .flatMap((item: any) =>
       (item.exhibition_orders ?? []).map((order: any) => ({
@@ -18,11 +22,13 @@ export default async function Page() {
       }))
     )
     .filter((order: any) => !order.cancelled);
+  const noticeStartedAt = startMission25Perf();
   const { data: shop } = await supabaseAdmin
     .from("shops")
     .select("announcement")
     .eq("id", access.shopId)
     .single();
+  logMission25Perf("page.dashboard.notice", noticeStartedAt);
   const weeklySales = orders
     .filter((order: any) => order.ordered_at >= week)
     .reduce(
@@ -41,6 +47,7 @@ export default async function Page() {
     ["今週売上", `${weeklySales.toLocaleString()}円`],
     ["未処理注文", `${orders.length}件`],
   ];
+  logMission25Perf("page.dashboard.total", totalStartedAt);
   return (
     <div>
       <h1 className="text-3xl font-semibold">ダッシュボード</h1>

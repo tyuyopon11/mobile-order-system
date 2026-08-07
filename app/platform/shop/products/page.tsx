@@ -4,6 +4,7 @@ import { requireShopAccess } from "@/lib/auth/shop-access";
 import { canPublishProduct } from "@/lib/products/publication";
 import { formatProductSalesPeriod, getProductSalesPeriodStatus, getProductSalesStatusLabel } from "@/lib/products/sales-period";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 import { setVendorProductPublished } from "../actions";
 
 export default async function Page({
@@ -11,13 +12,16 @@ export default async function Page({
 }: {
   searchParams: Promise<{ error?: string; updated?: string; created?: string }>;
 }) {
+  const totalStartedAt = startMission25Perf();
   const access = await requireShopAccess();
   const query = await searchParams;
+  const productsStartedAt = startMission25Perf();
   const { data } = await supabaseAdmin
     .from("exhibition_items")
     .select("id,item_no,product_name,category,quantity,irisu,price,status,published,sales_period_enabled,sales_start_date,sales_end_date")
     .eq("shop_id", access.shopId)
     .order("created_at", { ascending: false });
+  logMission25Perf("page.products.db", productsStartedAt);
 
   const success = query.created
     ? "商品を登録しました。"
@@ -26,6 +30,7 @@ export default async function Page({
       : query.updated === "unpublished"
         ? "商品を非公開にしました。"
         : null;
+  logMission25Perf("page.products.total", totalStartedAt);
 
   return (
     <div>

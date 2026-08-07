@@ -105,6 +105,7 @@ export default async function AdminLayout({
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    prefetch={false}
                     className="block rounded-xl px-4 py-3 text-sm font-medium text-stone-700 transition hover:bg-green-50 hover:text-green-900"
                   >
                     {item.label}

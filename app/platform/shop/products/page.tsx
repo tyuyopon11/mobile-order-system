@@ -15,7 +15,7 @@ export default async function Page({
   const query = await searchParams;
   const { data } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,item_no,product_name,category,quantity,irisu,price,status,published,sales_period_enabled,sales_start_date,sales_end_date,exhibition_images(id)")
+    .select("id,item_no,product_name,category,quantity,irisu,price,status,published,sales_period_enabled,sales_start_date,sales_end_date")
     .eq("shop_id", access.shopId)
     .order("created_at", { ascending: false });
 

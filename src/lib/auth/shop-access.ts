@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import {
@@ -18,7 +19,7 @@ export type ShopAccess = {
   userId: string;
 };
 
-export async function getShopAccess(): Promise<ShopAccess | null> {
+export const getShopAccess = cache(async function getShopAccess(): Promise<ShopAccess | null> {
   const access = await getPlatformAccess();
   if (access.state !== "approved" || !access.platformUser) return null;
 
@@ -43,7 +44,7 @@ export async function getShopAccess(): Promise<ShopAccess | null> {
     .maybeSingle();
   if (!shop) return null;
   return { shopId: shop.id, shopName: shop.shop_name, slug: shop.slug, isAdminMode, userId: access.platformUser.id };
-}
+});
 
 export async function requireShopAccess() {
   const access = await getShopAccess();

@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { createClient } from "@/lib/supabase/server";
 
 export type PlatformUserRole =
@@ -81,7 +83,7 @@ const PLATFORM_USER_COLUMNS = [
   "updated_at",
 ].join(",");
 
-export async function getPlatformAccess(): Promise<PlatformAccessResult> {
+export const getPlatformAccess = cache(async function getPlatformAccess(): Promise<PlatformAccessResult> {
   const supabase = await createClient();
 
   const {
@@ -174,7 +176,7 @@ export async function getPlatformAccess(): Promise<PlatformAccessResult> {
     authEmail: user.email ?? null,
     platformUser,
   };
-}
+});
 
 export function isApprovedPlatformUser(
   access: PlatformAccessResult

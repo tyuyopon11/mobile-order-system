@@ -1,5 +1,4 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 
 export type ShopOrderFilters = {
   auctionDate?: string;
@@ -39,12 +38,10 @@ export async function getShopOrders(
   shopId: string,
   filters: ShopOrderFilters = {}
 ): Promise<ShopOrder[]> {
-  const itemsStartedAt = startMission25Perf();
   const { data: items, error: itemError } = await supabaseAdmin
     .from("exhibition_items")
     .select("id,item_no,product_name,price,shops(shop_name)")
     .eq("shop_id", shopId);
-  logMission25Perf("page.orders.items", itemsStartedAt);
   if (itemError) throw new Error(itemError.message);
 
   const itemRows = (items ?? []).map((item: any) => {
@@ -77,9 +74,7 @@ export async function getShopOrders(
     ? query.order("buyer_no", { ascending: true })
     : query.order("ordered_at", { ascending: false });
 
-  const ordersStartedAt = startMission25Perf();
   const { data: orders, error: orderError } = await query;
-  logMission25Perf("page.orders.orders", ordersStartedAt);
   if (orderError) throw new Error(orderError.message);
 
   const itemMap = new Map(itemRows.map((item) => [String(item.id), item]));

@@ -1,7 +1,6 @@
 import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
-import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 
 export type PlatformUserRole =
   | "admin"
@@ -87,12 +86,10 @@ const PLATFORM_USER_COLUMNS = [
 export const getPlatformAccess = cache(async function getPlatformAccess(): Promise<PlatformAccessResult> {
   const supabase = await createClient();
 
-  const authStartedAt = startMission25Perf();
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
-  logMission25Perf("server.auth", authStartedAt);
 
   if (authError) {
     console.error(
@@ -110,13 +107,11 @@ export const getPlatformAccess = cache(async function getPlatformAccess(): Promi
     };
   }
 
-  const platformUserStartedAt = startMission25Perf();
   const { data, error: profileError } = await supabase
     .from("platform_users")
     .select(PLATFORM_USER_COLUMNS)
     .eq("auth_user_id", user.id)
     .maybeSingle();
-  logMission25Perf("platform_user", platformUserStartedAt);
 
   if (profileError) {
     console.error(

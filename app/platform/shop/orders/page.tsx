@@ -1,7 +1,6 @@
 import CancelOrderButton from "@/components/orders/CancelOrderButton";
 import { requireShopAccess } from "@/lib/auth/shop-access";
 import { getShopOrders } from "@/lib/orders/shop-orders";
-import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 import { cancelVendorOrder } from "./actions";
 
 export default async function Page({
@@ -9,7 +8,6 @@ export default async function Page({
 }: {
   searchParams: Promise<{ q?: string; auctionDate?: string }>;
 }) {
-  const totalStartedAt = startMission25Perf();
   const access = await requireShopAccess();
   const params = await searchParams;
   const orders = await getShopOrders(access.shopId, {
@@ -17,7 +15,6 @@ export default async function Page({
     auctionDate: params.auctionDate,
     orderBy: "newest",
   });
-  logMission25Perf("page.orders.total", totalStartedAt);
 
   return (
     <div>

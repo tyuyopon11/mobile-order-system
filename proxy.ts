@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { logMission25Perf, startMission25Perf } from "@/lib/performance/mission25-perf";
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -33,11 +32,9 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const authStartedAt = startMission25Perf();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  logMission25Perf("proxy.auth", authStartedAt);
 
   if (!user) {
     const loginUrl = request.nextUrl.clone();

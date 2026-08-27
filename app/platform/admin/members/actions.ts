@@ -315,6 +315,43 @@ export async function releaseShopManagerRole(memberId: string): Promise<MemberAc
   return createSuccessState("ショップ管理者権限を解除し、Buyerへ変更しました。");
 }
 
+export async function assignShopManagerRole(
+  memberId: string,
+  _previousState: MemberActionState,
+  formData: FormData
+): Promise<MemberActionState> {
+  const access = await requireApprovedAdmin();
+  if (!access) return createErrorState("管理者権限を確認できませんでした。");
+
+  const shopId = String(formData.get("shopId") ?? "").trim();
+  if (!shopId || !(await shopExists(shopId))) {
+    return createErrorState("有効な管理ショップを選択してください。");
+  }
+
+  const { data: member, error: memberError } = await supabaseAdmin
+    .from("platform_users")
+    .select("id,role")
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (memberError || !member) return createErrorState("対象の会員を確認できませんでした。");
+  if (member.role !== "buyer") return createErrorState("Buyer会員だけをショップ管理者へ変更できます。");
+
+  const { data: updatedMember, error } = await supabaseAdmin
+    .from("platform_users")
+    .update({ role: "shop", shop_id: shopId, updated_at: new Date().toISOString() })
+    .eq("id", memberId)
+    .eq("role", "buyer")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !updatedMember) return createErrorState("ショップ管理者へ変更できませんでした。");
+  revalidatePath(`/platform/admin/members/${memberId}`);
+  revalidatePath("/platform/admin/members");
+  revalidatePath("/platform");
+  return createSuccessState("ショップ管理者へ変更し、管理ショップを設定しました。");
+}
+
 export async function rejectMember(
   memberId: string,
   reason: string

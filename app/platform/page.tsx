@@ -1,6 +1,11 @@
 import Link from "next/link";
 
 import BotanicalDecoration from "@/app/components/BotanicalDecoration";
+import {
+  getPlatformAccess,
+  isApprovedPlatformAdmin,
+  isApprovedShopUser,
+} from "@/lib/auth/platform-user";
 import { createClient } from "@/lib/supabase/server";
 import { SHOP_PUBLICATION_COLUMN } from "@/lib/shops/publication";
 
@@ -95,21 +100,28 @@ function getShopBranding(shop: Shop): ShopBranding {
 
 export default async function PlatformPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const { data, error } = await supabase
-    .from("shops")
-    .select("id, slug, shop_name, description, logo_url")
-    .eq(SHOP_PUBLICATION_COLUMN, true)
-    .eq("show_on_public_site", true)
-    .order("display_order", { ascending: true });
+  const [access, shopResult] = await Promise.all([
+    getPlatformAccess(),
+    supabase
+      .from("shops")
+      .select("id, slug, shop_name, description, logo_url")
+      .eq(SHOP_PUBLICATION_COLUMN, true)
+      .eq("show_on_public_site", true)
+      .order("display_order", { ascending: true }),
+  ]);
+  const { data, error } = shopResult;
+  const portalLink = isApprovedPlatformAdmin(access)
+    ? { href: "/platform/admin", label: "管理画面へ" }
+    : isApprovedShopUser(access) && access.platformUser?.shop_id
+      ? { href: "/platform/shop", label: "ショップ管理画面へ" }
+      : null;
 
   const shops = (data ?? []) as Shop[];
-  const { data: favoriteRows } = user
+  const { data: favoriteRows } = access.authUserId
     ? await supabase
         .from("favorite_shops")
         .select("shop_id")
-        .eq("user_id", user.id)
+        .eq("user_id", access.authUserId)
     : { data: [] };
   const favoriteIds = new Set(
     (favoriteRows ?? []).map((row) => String(row.shop_id))
@@ -139,13 +151,16 @@ export default async function PlatformPage() {
       <section className="relative border-b border-[#26382f]/15 px-5 py-16 sm:px-8 sm:py-24 lg:px-12 lg:py-28">
         <BotanicalDecoration />
         <div className="relative mx-auto max-w-6xl">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] text-[#536159] transition hover:text-[#26382f]"
-          >
-            <span aria-hidden="true">←</span>
-            LEI PORT
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] text-[#536159] transition hover:text-[#26382f]"
+            >
+              <span aria-hidden="true">←</span>
+              LEI PORT
+            </Link>
+            {portalLink && <Link href={portalLink.href} prefetch={false} className="inline-flex items-center justify-center rounded-full border border-[#26382f]/30 bg-white/55 px-5 py-2.5 text-sm font-semibold text-[#26382f] transition hover:bg-white">{portalLink.label}<span aria-hidden="true" className="ml-2">→</span></Link>}
+          </div>
           <p className="mt-16 text-xs font-medium tracking-[0.38em] text-[#66746c] sm:text-sm">
             BtoB MARKETPLACE
           </p>

@@ -122,6 +122,39 @@ export default async function AdminProductsPage({
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
   const supabase = await createClient();
+  const safeQuery = q.replace(/[%_,()]/g, " ").trim();
+  const productSearchFilter = safeQuery
+    ? `product_name.ilike.%${safeQuery}%,variety.ilike.%${safeQuery}%,item.ilike.%${safeQuery}%,jf_code.ilike.%${safeQuery}%`
+    : "";
+  const equalityFilters: Array<{
+    column: "shop_id" | "status" | "published";
+    value: string | boolean;
+  }> = [];
+
+  if (shop) equalityFilters.push({ column: "shop_id", value: shop });
+  if (status && STATUS_LABELS[status]) {
+    equalityFilters.push({ column: "status", value: status });
+  }
+  if (visibility === "published") {
+    equalityFilters.push({ column: "published", value: true });
+  } else if (visibility === "private") {
+    equalityFilters.push({ column: "published", value: false });
+  }
+
+  function createFilteredCountQuery() {
+    let query = supabase
+      .from("exhibition_items")
+      .select("id", { count: "exact", head: true });
+
+    if (productSearchFilter) {
+      query = query.or(productSearchFilter);
+    }
+    for (const filter of equalityFilters) {
+      query = query.eq(filter.column, filter.value);
+    }
+
+    return query;
+  }
 
   const [
     shopsResult,
@@ -134,21 +167,10 @@ export default async function AdminProductsPage({
       .from("shops")
       .select("id,shop_name")
       .order("display_order", { ascending: true }),
-    supabase
-      .from("exhibition_items")
-      .select("id", { count: "exact", head: true }),
-    supabase
-      .from("exhibition_items")
-      .select("id", { count: "exact", head: true })
-      .eq("published", true),
-    supabase
-      .from("exhibition_items")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "selling"),
-    supabase
-      .from("exhibition_items")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "sold"),
+    createFilteredCountQuery(),
+    createFilteredCountQuery().eq("published", true),
+    createFilteredCountQuery().eq("status", "selling"),
+    createFilteredCountQuery().eq("status", "sold"),
   ]);
 
   let productsQuery = supabase
@@ -186,23 +208,11 @@ export default async function AdminProductsPage({
       { count: "exact" }
     );
 
-  if (q) {
-    const safeQuery = q.replace(/[%_,()]/g, " ").trim();
-    if (safeQuery) {
-      productsQuery = productsQuery.or(
-        `product_name.ilike.%${safeQuery}%,variety.ilike.%${safeQuery}%,item.ilike.%${safeQuery}%,jf_code.ilike.%${safeQuery}%`
-      );
-    }
+  if (productSearchFilter) {
+    productsQuery = productsQuery.or(productSearchFilter);
   }
-
-  if (shop) productsQuery = productsQuery.eq("shop_id", shop);
-  if (status && STATUS_LABELS[status]) {
-    productsQuery = productsQuery.eq("status", status);
-  }
-  if (visibility === "published") {
-    productsQuery = productsQuery.eq("published", true);
-  } else if (visibility === "private") {
-    productsQuery = productsQuery.eq("published", false);
+  for (const filter of equalityFilters) {
+    productsQuery = productsQuery.eq(filter.column, filter.value);
   }
 
   const { data, error, count } = await productsQuery

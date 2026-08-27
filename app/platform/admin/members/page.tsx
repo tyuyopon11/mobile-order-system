@@ -180,13 +180,12 @@ export default async function MembersPage({
             </p>
           </div>
 
-          <p className="text-sm text-stone-500">
-            全会員
-            <span className="ml-2 text-2xl font-semibold text-stone-900">
-              {members.length}
-            </span>
-            件
-          </p>
+          <div className="flex flex-col items-stretch gap-3 sm:items-end">
+            <Link href="/platform/admin/members/new" className="inline-flex items-center justify-center rounded-xl bg-green-800 px-5 py-3 text-sm font-medium text-white transition hover:bg-green-900">
+              ＋ ショップ管理者登録
+            </Link>
+            <p className="text-sm text-stone-500">全会員<span className="ml-2 text-2xl font-semibold text-stone-900">{members.length}</span>件</p>
+          </div>
         </div>
       </section>
 
@@ -346,22 +345,15 @@ export default async function MembersPage({
                     </dl>
                   </div>
 
-                  <div className="shrink-0">
-                    {activeTab === "pending" ? (
+                  <div className="flex shrink-0 flex-wrap items-start gap-3">
+                    {activeTab === "pending" && (
                       <MemberActions
                         memberId={member.id}
                         memberName={member.name}
                         companyName={member.company_name}
                       />
-                    ) : (
-                      <button
-                        type="button"
-                        disabled
-                        className="rounded-xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-500 opacity-50"
-                      >
-                        詳細
-                      </button>
                     )}
+                    <Link href={`/platform/admin/members/${member.id}`} className="inline-flex rounded-xl border border-stone-300 bg-white px-5 py-3 text-sm font-medium text-stone-700 transition hover:border-green-300 hover:bg-green-50 hover:text-green-900">詳細</Link>
                   </div>
                 </div>
               </article>

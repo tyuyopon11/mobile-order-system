@@ -7,10 +7,25 @@ import {
   isApprovedPlatformAdmin,
 } from "@/lib/auth/platform-user";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export type MemberActionState = {
   success: boolean;
   message: string;
+};
+
+export type ShopManagerFieldErrors = Partial<
+  Record<"email" | "name" | "companyName" | "phone" | "shopId" | "password" | "passwordConfirm", string>
+>;
+
+export type ShopManagerActionState = MemberActionState & {
+  fieldErrors: ShopManagerFieldErrors;
+};
+
+const emptyShopManagerState: ShopManagerActionState = {
+  success: false,
+  message: "",
+  fieldErrors: {},
 };
 
 type PlatformAccessResult = Awaited<
@@ -102,6 +117,23 @@ export async function approveMember(
     );
   }
 
+  const { data: approvalTarget, error: approvalTargetError } = await supabaseAdmin
+    .from("platform_users")
+    .select("role,shop_id")
+    .eq("id", normalizedMemberId)
+    .maybeSingle();
+
+  if (approvalTargetError || !approvalTarget) {
+    return createErrorState("対象の会員情報を確認できませんでした。");
+  }
+
+  if (
+    (approvalTarget.role === "shop" || approvalTarget.role === "shop_admin") &&
+    !approvalTarget.shop_id
+  ) {
+    return createErrorState("ショップ管理者には管理ショップの設定が必要です。");
+  }
+
   const supabase = await createClient();
 
   const { data, error } = await supabase.rpc(
@@ -131,6 +163,156 @@ export async function approveMember(
   return createSuccessState(
     result?.message ?? "会員を承認しました。"
   );
+}
+
+function normalizeShopManagerInput(formData: FormData) {
+  return {
+    email: String(formData.get("email") ?? "").trim().toLowerCase(),
+    name: String(formData.get("name") ?? "").trim(),
+    companyName: String(formData.get("companyName") ?? "").trim(),
+    phone: String(formData.get("phone") ?? "").trim(),
+    shopId: String(formData.get("shopId") ?? "").trim(),
+    password: String(formData.get("password") ?? ""),
+    passwordConfirm: String(formData.get("passwordConfirm") ?? ""),
+  };
+}
+
+function validateShopManagerInput(
+  input: ReturnType<typeof normalizeShopManagerInput>
+): ShopManagerFieldErrors {
+  const errors: ShopManagerFieldErrors = {};
+  if (!input.email) errors.email = "メールアドレスを入力してください。";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) errors.email = "メールアドレスの形式を確認してください。";
+  if (!input.name) errors.name = "担当者名を入力してください。";
+  else if (input.name.length > 100) errors.name = "担当者名は100文字以内で入力してください。";
+  if (!input.companyName) errors.companyName = "会社名を入力してください。";
+  else if (input.companyName.length > 200) errors.companyName = "会社名は200文字以内で入力してください。";
+  if (input.phone.length > 30) errors.phone = "電話番号は30文字以内で入力してください。";
+  if (!input.shopId) errors.shopId = "管理ショップを選択してください。";
+  if (input.password.length < 8) errors.password = "初期パスワードは8文字以上で入力してください。";
+  else if (input.password.length > 72) errors.password = "初期パスワードは72文字以内で入力してください。";
+  if (input.password !== input.passwordConfirm) errors.passwordConfirm = "確認用パスワードが一致しません。";
+  return errors;
+}
+
+async function shopExists(shopId: string) {
+  const { data, error } = await supabaseAdmin.from("shops").select("id").eq("id", shopId).maybeSingle();
+  return !error && Boolean(data);
+}
+
+export async function createShopManager(
+  _previousState: ShopManagerActionState,
+  formData: FormData
+): Promise<ShopManagerActionState> {
+  const access = await requireApprovedAdmin();
+  if (!access) return { ...emptyShopManagerState, message: "管理者権限を確認できませんでした。" };
+
+  const input = normalizeShopManagerInput(formData);
+  const fieldErrors = validateShopManagerInput(input);
+  if (Object.keys(fieldErrors).length > 0) {
+    return { ...emptyShopManagerState, message: "入力内容を確認してください。", fieldErrors };
+  }
+  if (!(await shopExists(input.shopId))) {
+    return { ...emptyShopManagerState, message: "選択したショップを確認できませんでした。", fieldErrors: { shopId: "有効なショップを選択してください。" } };
+  }
+
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { name: input.name, company_name: input.companyName, phone: input.phone || null },
+  });
+  if (authError || !authData.user) {
+    const duplicate = authError?.message.toLowerCase().includes("already") ?? false;
+    return {
+      ...emptyShopManagerState,
+      message: duplicate ? "このメールアドレスはすでに登録されています。" : "ショップ管理者を登録できませんでした。",
+      fieldErrors: duplicate ? { email: "登録済みのメールアドレスです。" } : {},
+    };
+  }
+
+  const now = new Date().toISOString();
+  const { data: configuredProfile, error: profileError } = await supabaseAdmin
+    .from("platform_users")
+    .update({
+      email: input.email,
+      name: input.name,
+      company_name: input.companyName,
+      phone: input.phone || null,
+      role: "shop",
+      shop_id: input.shopId,
+      approval_status: "pending",
+      is_active: false,
+      updated_at: now,
+    })
+    .eq("auth_user_id", authData.user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (profileError || !configuredProfile) {
+    const { error: cleanupError } = await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+    if (cleanupError) console.error("[Lei Port Admin] Failed to clean up Auth user:", cleanupError.message);
+    console.error(
+      "[Lei Port Admin] Failed to configure shop manager:",
+      profileError?.message ?? "platform_users row was not created"
+    );
+    return { ...emptyShopManagerState, message: "会員情報を設定できなかったため、登録を取り消しました。" };
+  }
+
+  revalidatePath("/platform/admin/members");
+  return { success: true, message: "ショップ管理者を承認待ちとして登録しました。", fieldErrors: {} };
+}
+
+async function loadManagedShopMember(memberId: string) {
+  return supabaseAdmin
+    .from("platform_users")
+    .select("id,role,shop_id,approval_status,is_active")
+    .eq("id", memberId)
+    .maybeSingle();
+}
+
+export async function changeShopAssignment(
+  memberId: string,
+  _previousState: MemberActionState,
+  formData: FormData
+): Promise<MemberActionState> {
+  const access = await requireApprovedAdmin();
+  if (!access) return createErrorState("管理者権限を確認できませんでした。");
+  const shopId = String(formData.get("shopId") ?? "").trim();
+  if (!shopId || !(await shopExists(shopId))) return createErrorState("有効な管理ショップを選択してください。");
+  const { data: member } = await loadManagedShopMember(memberId);
+  if (!member || (member.role !== "shop" && member.role !== "shop_admin")) return createErrorState("対象はショップ管理者ではありません。");
+  const { error } = await supabaseAdmin.from("platform_users").update({ shop_id: shopId, updated_at: new Date().toISOString() }).eq("id", memberId);
+  if (error) return createErrorState("管理ショップを変更できませんでした。");
+  revalidatePath(`/platform/admin/members/${memberId}`);
+  revalidatePath("/platform/admin/members");
+  return createSuccessState("管理ショップを変更しました。");
+}
+
+export async function setShopManagerActive(memberId: string, active: boolean): Promise<MemberActionState> {
+  const access = await requireApprovedAdmin();
+  if (!access) return createErrorState("管理者権限を確認できませんでした。");
+  if (memberId === access.platformUser.id) return createErrorState("自分自身の利用状態は変更できません。");
+  const { data: member } = await loadManagedShopMember(memberId);
+  if (!member || (member.role !== "shop" && member.role !== "shop_admin")) return createErrorState("対象はショップ管理者ではありません。");
+  if (active && (member.approval_status !== "approved" || !member.shop_id)) return createErrorState("承認済みで管理ショップが設定された会員だけ再開できます。");
+  const { error } = await supabaseAdmin.from("platform_users").update({ is_active: active, updated_at: new Date().toISOString() }).eq("id", memberId);
+  if (error) return createErrorState(active ? "利用を再開できませんでした。" : "利用停止にできませんでした。");
+  revalidatePath(`/platform/admin/members/${memberId}`);
+  revalidatePath("/platform/admin/members");
+  return createSuccessState(active ? "ショップ管理者の利用を再開しました。" : "ショップ管理者を利用停止にしました。");
+}
+
+export async function releaseShopManagerRole(memberId: string): Promise<MemberActionState> {
+  const access = await requireApprovedAdmin();
+  if (!access) return createErrorState("管理者権限を確認できませんでした。");
+  const { data: member } = await loadManagedShopMember(memberId);
+  if (!member || (member.role !== "shop" && member.role !== "shop_admin")) return createErrorState("対象はショップ管理者ではありません。");
+  const { error } = await supabaseAdmin.from("platform_users").update({ role: "buyer", shop_id: null, updated_at: new Date().toISOString() }).eq("id", memberId);
+  if (error) return createErrorState("ショップ管理者権限を解除できませんでした。");
+  revalidatePath(`/platform/admin/members/${memberId}`);
+  revalidatePath("/platform/admin/members");
+  return createSuccessState("ショップ管理者権限を解除し、Buyerへ変更しました。");
 }
 
 export async function rejectMember(

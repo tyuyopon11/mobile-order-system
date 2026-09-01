@@ -47,7 +47,7 @@ export const marketTheme: ShopTheme = {
   type: "market",
 
   brand: {
-    eyebrow: "LEI PORT SHOP",
+    eyebrow: "CIRQNEX SHOP",
     catchCopy: "植物の価値と出会うマーケット。",
     subCopy:
       "季節の植物や新しい品種など、ショップが選んだおすすめの商品をご紹介します。",
@@ -58,7 +58,7 @@ export const marketTheme: ShopTheme = {
   },
 
   shopCard: {
-    eyebrow: "LEI PORT SHOP",
+    eyebrow: "CIRQNEX SHOP",
     description:
       "東京フラワーポートが取り扱う植物を、商品情報とともにご案内しています。",
     linkLabel: "ショップを見る",

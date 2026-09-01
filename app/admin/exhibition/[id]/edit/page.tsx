@@ -82,7 +82,7 @@ export default async function ExhibitionItemEditPage({ params }: Props) {
 
       <div>
         <p className="text-sm font-bold uppercase tracking-widest text-green-700">
-          Lei Port Standard
+          CIRQNEX Standard
         </p>
 
         <h1 className="mt-1 text-3xl font-bold">商品情報編集</h1>

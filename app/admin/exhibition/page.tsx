@@ -265,7 +265,7 @@ export default async function ExhibitionAdminPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-bold uppercase tracking-widest text-green-700">
-            Lei Port Standard
+            CIRQNEX Standard
           </p>
 
           <h1 className="mt-1 text-2xl font-bold">

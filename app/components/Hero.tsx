@@ -53,7 +53,7 @@ export default function Hero({
               }}
               className="font-serif text-[clamp(3.2rem,10vw,8.8rem)] leading-[0.88] tracking-[-0.055em] text-[#26382f]"
             >
-              Lei Port
+              CIRQNEX
             </motion.h1>
           </div>
 

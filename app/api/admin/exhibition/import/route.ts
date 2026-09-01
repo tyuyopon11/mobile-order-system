@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: "LeiPort_Import_Template_v1.1.xlsx の取込が完了しました。",
+      message: "CIRQNEX Import Template v1.1 の取込が完了しました。",
       exhibitionName,
       shopName: shop.shop_name,
       itemCount: rows.length,

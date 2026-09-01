@@ -66,7 +66,7 @@ export default async function AdminLayout({
               href="/platform/admin"
               className="text-xl font-semibold tracking-tight text-stone-900"
             >
-              Lei Port Admin
+              CIRQNEX Admin
             </Link>
 
             <p className="mt-1 text-xs tracking-[0.18em] text-green-800">
@@ -120,7 +120,7 @@ export default async function AdminLayout({
               href="/platform"
               className="block rounded-xl px-4 py-3 text-sm text-stone-500 transition hover:bg-stone-50 hover:text-stone-800"
             >
-              ← Lei Portへ戻る
+              ← CIRQNEXへ戻る
             </Link>
           </div>
         </aside>

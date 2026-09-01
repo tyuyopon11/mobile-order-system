@@ -88,7 +88,7 @@ export default async function OrderCompletePage({
               href="/platform"
               className="rounded-full border border-stone-300 bg-white px-6 py-4 text-sm font-semibold text-stone-700 transition hover:border-green-800 hover:text-green-800"
             >
-              Lei Portトップへ
+              CIRQNEXトップへ
             </Link>
 
             <Link

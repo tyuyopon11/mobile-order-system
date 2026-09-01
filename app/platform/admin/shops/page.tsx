@@ -16,7 +16,7 @@ const SHOP_TYPE_LABELS: Record<ShopType, string> = {
   corporate: "法人",
   brand: "ブランド",
   exhibition: "展示販売",
-  official: "Lei Port公式",
+  official: "CIRQNEX公式",
 };
 
 function formatDate(value: string) {
@@ -63,7 +63,7 @@ export default async function AdminShopsPage() {
               ショップ管理
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-500 sm:text-base">
-              Lei Portに出店するショップの情報、公開状態、おすすめ表示を管理します。
+              CIRQNEXに出店するショップの情報、公開状態、おすすめ表示を管理します。
             </p>
           </div>
 

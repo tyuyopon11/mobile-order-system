@@ -49,7 +49,7 @@ export default function ProductCard({ item }: ProductCardProps) {
             <span className="mt-4 text-sm font-medium text-stone-600">商品画像準備中</span>
             <span className="mt-1 text-xs text-stone-500">今後追加予定です</span>
             <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-green-800">
-              Lei Port Marketplace
+              CIRQNEX
             </span>
           </div>
         )}

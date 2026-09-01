@@ -91,7 +91,7 @@ export async function login(
 
     return {
       error:
-        "Lei Portの会員情報が登録されていません。管理者へお問い合わせください。",
+        "CIRQNEXの会員情報が登録されていません。管理者へお問い合わせください。",
     };
   }
 

@@ -20,7 +20,7 @@ export default function NewShopPage() {
           新規ショップ登録
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-500 sm:text-base">
-          Lei Portに追加するショップの基本情報を登録します。ロゴとバナー画像は、登録後の画像管理で設定できます。
+          CIRQNEXに追加するショップの基本情報を登録します。ロゴとバナー画像は、登録後の画像管理で設定できます。
         </p>
       </section>
 

@@ -157,7 +157,7 @@ export default async function PlatformPage() {
               className="inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] text-[#536159] transition hover:text-[#26382f]"
             >
               <span aria-hidden="true">←</span>
-              LEI PORT
+              CIRQNEX
             </Link>
             {portalLink && <Link href={portalLink.href} prefetch={false} className="inline-flex items-center justify-center rounded-full border border-[#26382f]/30 bg-white/55 px-5 py-2.5 text-sm font-semibold text-[#26382f] transition hover:bg-white">{portalLink.label}<span aria-hidden="true" className="ml-2">→</span></Link>}
           </div>
@@ -165,7 +165,7 @@ export default async function PlatformPage() {
             BtoB MARKETPLACE
           </p>
           <h1 className="mt-5 max-w-5xl font-serif text-[clamp(3rem,8vw,7rem)] leading-[0.92] tracking-[-0.05em] text-[#26382f]">
-            Lei Port Marketplace
+            CIRQNEX
           </h1>
           <div className="mt-9 h-px w-24 bg-[#26382f]/40" />
           <p className="mt-7 font-serif text-2xl leading-relaxed text-[#26382f] sm:text-3xl">
@@ -338,7 +338,7 @@ export default async function PlatformPage() {
           </p>
 
           <p className="mt-2 text-xs text-gray-400">
-            Lei Port Marketplace Ver.1.1
+            CIRQNEX Ver.1.1
           </p>
         </footer>
       </div>

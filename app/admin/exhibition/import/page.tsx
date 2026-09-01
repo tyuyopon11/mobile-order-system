@@ -40,7 +40,7 @@ export default function ExhibitionImportPage() {
         </Link>
         <h1 className="mt-5 text-3xl font-bold text-stone-900">商品Excel取込</h1>
         <p className="mt-3 text-sm leading-7 text-stone-600">
-          正式フォーマットは LeiPort_Import_Template_v1.1.xlsx です。
+          正式フォーマットは CIRQNEX Import Template v1.1 です。
           入数は1ケースの鉢数、数量は販売可能ケース数として取り込みます。
         </p>
 

@@ -50,7 +50,7 @@ export default async function LoginPage({
               className="inline-flex items-center gap-2 text-sm text-neutral-500 transition hover:text-neutral-900"
             >
               <span aria-hidden="true">←</span>
-              Lei Portへ戻る
+              CIRQNEXへ戻る
             </Link>
           </div>
 
@@ -61,7 +61,7 @@ export default async function LoginPage({
               </p>
 
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-neutral-900">
-                Lei Port
+                CIRQNEX
               </h1>
 
               <p className="mt-3 text-sm leading-7 text-neutral-600">
@@ -75,7 +75,7 @@ export default async function LoginPage({
 
             <div className="mt-7 border-t border-neutral-100 pt-6">
               <p className="text-center text-xs leading-6 text-neutral-500">
-                Lei Portは東京フラワーポートの
+                CIRQNEXは東京フラワーポートの
                 <br />
                 承認を受けた事業者向けサービスです。
               </p>

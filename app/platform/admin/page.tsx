@@ -27,7 +27,7 @@ const managementCards = [
     eyebrow: "ORDERS",
     title: "注文管理",
     description:
-      "Lei Portで受け付けた注文と対応状況を確認します。",
+      "CIRQNEXで受け付けた注文と対応状況を確認します。",
   },
 ];
 
@@ -40,7 +40,7 @@ export default function AdminDashboardPage() {
         </p>
 
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
-          Lei Port 管理画面
+          CIRQNEX 管理画面
         </h1>
 
         <p className="mt-4 max-w-3xl text-sm leading-7 text-stone-500 sm:text-base">

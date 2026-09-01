@@ -28,7 +28,7 @@ export default async function BuyerOrderHistoryPage() {
   return (
     <main className="min-h-screen bg-[#f5f4ef] px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-4xl">
-        <Link href="/platform" className="text-sm font-semibold text-green-800">← Lei Portへ戻る</Link>
+        <Link href="/platform" className="text-sm font-semibold text-green-800">← CIRQNEXへ戻る</Link>
         <h1 className="mt-6 text-3xl font-semibold text-stone-900">注文履歴</h1>
         <div className="mt-8 space-y-4">
           {(orders ?? []).map((order: any) => {

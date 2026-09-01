@@ -62,7 +62,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       <header className="border-b border-stone-200 pb-7">
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-xs font-semibold tracking-[0.28em] text-green-800">
-            {isTakashimaya ? "SELECTED PLANT" : "LEI PORT MARKETPLACE"}
+            {isTakashimaya ? "SELECTED PLANT" : "CIRQNEX"}
           </p>
 
           {isOneOfAKind && (
@@ -153,7 +153,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {!isTakashimaya && hasClassification && (
         <section className="rounded-[1.75rem] border border-green-100 bg-green-50/50 p-6 sm:p-8">
           <p className="text-xs font-semibold tracking-[0.24em] text-green-800">
-            LEI PORT STANDARD
+            CIRQNEX STANDARD
           </p>
 
           <h2 className="mt-3 text-xl font-semibold text-stone-900">

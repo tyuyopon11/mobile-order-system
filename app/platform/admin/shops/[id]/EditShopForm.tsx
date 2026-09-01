@@ -104,7 +104,7 @@ export default function EditShopForm({ shop }: { shop: Shop }) {
             <option value="corporate">法人</option>
             <option value="brand">ブランド</option>
             <option value="exhibition">展示販売</option>
-            <option value="official">Lei Port公式</option>
+            <option value="official">CIRQNEX公式</option>
           </select>
           <FieldError message={state.fieldErrors.shopType} />
         </div>

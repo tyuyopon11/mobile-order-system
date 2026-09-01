@@ -23,7 +23,7 @@ export default function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col justify-between gap-10 md:flex-row md:items-end">
         <div>
           <p className="font-serif text-3xl">
-            Lei Port
+            CIRQNEX
           </p>
 
           <p className="mt-2 text-xs tracking-[0.22em] text-[#f4f0e8]/60">
@@ -35,7 +35,7 @@ export default function Footer() {
           <p>Operated by Tokyo Flower Port</p>
 
           <p className="mt-3 text-xs">
-            © {new Date().getFullYear()} Lei Port Marketplace
+            © {new Date().getFullYear()} CIRQNEX
           </p>
         </div>
       </div>

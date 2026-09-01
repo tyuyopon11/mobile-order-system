@@ -176,7 +176,7 @@ export default async function MembersPage({
             </h1>
 
             <p className="mt-4 text-sm leading-7 text-stone-500 sm:text-base">
-              Lei Port利用者の承認状態と利用状況を管理します。
+              CIRQNEX利用者の承認状態と利用状況を管理します。
             </p>
           </div>
 

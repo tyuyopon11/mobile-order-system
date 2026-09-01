@@ -45,7 +45,7 @@ function getShopBrand(shopName: string, slug: string): ShopBrand {
   }
 
   return {
-    eyebrow: "LEI PORT SHOP",
+    eyebrow: "CIRQNEX SHOP",
     catchCopy: "植物の価値と出会うマーケット。",
     subCopy:
       "季節の植物や新しい品種など、ショップが選んだおすすめの商品をご紹介します。",
@@ -106,7 +106,7 @@ export default async function ShopPage({
             className="inline-flex items-center gap-2 text-sm font-medium text-stone-600 transition hover:text-green-800"
           >
             <span aria-hidden="true">←</span>
-            Lei Port Marketplace
+            CIRQNEX
           </Link>
         </div>
 

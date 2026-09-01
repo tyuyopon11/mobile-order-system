@@ -14,7 +14,7 @@ export default async function HomePage() {
   const shops: HomeShop[] = (data ?? []).map((shop) => ({
     name: shop.shop_name,
     category: String(shop.shop_type ?? "MARKETPLACE").replaceAll("_", " ").toUpperCase(),
-    description: shop.short_description || shop.description || "Lei Port Marketplaceのショップです。",
+    description: shop.short_description || shop.description || "CIRQNEXのショップです。",
     href: `/platform/shops/${shop.slug}`,
     status: isShopPublished(shop) ? "OPEN" : "COMING SOON",
   }));

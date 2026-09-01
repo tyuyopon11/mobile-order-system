@@ -148,7 +148,7 @@ export default async function ExhibitionItemDetailPage({
 
       <div>
         <p className="text-sm font-bold uppercase tracking-widest text-green-700">
-          Lei Port Standard
+          CIRQNEX Standard
         </p>
 
         <h1 className="mt-1 text-3xl font-bold">商品詳細</h1>
@@ -164,7 +164,7 @@ export default async function ExhibitionItemDetailPage({
             <h2 className="text-xl font-bold">LPS商品情報</h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Lei Port Standardに基づいて情報を分類しています。
+              CIRQNEX Standardに基づいて情報を分類しています。
             </p>
           </div>
 

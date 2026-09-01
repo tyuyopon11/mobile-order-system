@@ -28,7 +28,7 @@ function getStatusView(state: string): StatusView {
         eyebrow: "APPLICATION STATUS",
         title: "現在、このアカウントではご利用いただけません",
         message:
-          "Lei Portへの利用申請は、現在承認されていない状態です。",
+          "CIRQNEXへの利用申請は、現在承認されていない状態です。",
         detail:
           "登録内容については東京フラワーポート担当者までお問い合わせください。",
       };
@@ -48,7 +48,7 @@ function getStatusView(state: string): StatusView {
         eyebrow: "ACCOUNT ERROR",
         title: "利用者情報を確認できませんでした",
         message:
-          "ログイン情報に対応するLei Port利用者情報が見つかりません。",
+          "ログイン情報に対応するCIRQNEX利用者情報が見つかりません。",
         detail:
           "お手数ですが、東京フラワーポート担当者までお問い合わせください。",
       };
@@ -115,7 +115,7 @@ export default async function AccountStatusPage() {
               href="/platform"
               className="inline-flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 py-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
             >
-              Lei Port TOPへ
+              CIRQNEX TOPへ
             </Link>
 
             <form action={logout}>

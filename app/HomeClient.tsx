@@ -57,7 +57,7 @@ export default function HomeClient({ shops }: { shops: HomeShop[] }) {
           >
             <div className="max-w-2xl">
               <p className="text-lg leading-9 text-[#536159]">
-                Lei Portは、単なる販売サイトではありません。
+                CIRQNEXは、単なる販売サイトではありません。
                 生産者、市場、仲卸、買参人、法人が持つ価値をひとつの場所につなぎ、
                 新しい販売機会と継続的なBusinessを生み出すためのプラットフォームです。
               </p>

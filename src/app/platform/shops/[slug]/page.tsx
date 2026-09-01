@@ -51,7 +51,7 @@ export default async function ShopPage({
             className="inline-flex items-center gap-2 text-sm font-medium text-stone-600 transition hover:text-green-800"
           >
             <span aria-hidden="true">←</span>
-            Lei Port Marketplace
+            CIRQNEX
           </Link>
         </div>
 

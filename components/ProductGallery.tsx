@@ -100,7 +100,7 @@ export default function ProductGallery({
               </p>
 
               <p className="mt-2 text-xs font-bold uppercase tracking-widest text-green-700">
-                Lei Port Marketplace
+                CIRQNEX
               </p>
             </div>
           )}

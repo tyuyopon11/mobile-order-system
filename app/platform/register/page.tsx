@@ -43,7 +43,7 @@ export default async function RegisterPage() {
               <p className="mt-3 text-sm leading-7 text-neutral-600">
                 必要事項を入力して申請してください。
                 <br />
-                管理者の承認後にLei Portをご利用いただけます。
+                管理者の承認後にCIRQNEXをご利用いただけます。
               </p>
             </div>
 

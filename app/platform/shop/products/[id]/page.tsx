@@ -19,7 +19,7 @@ export default async function Page({ params, searchParams }: {
   const query = await searchParams;
   const { data: product } = await supabaseAdmin
     .from("exhibition_items")
-    .select("id,item_no,product_name,category,tree_height,tree_shape,pot_size,irisu,quantity,price,pickup_comment,published,reservation_period_enabled,reservation_start_date,reservation_end_date,sales_period_enabled,sales_start_date,sales_end_date,exhibition_images(id,image_url,sort_order)")
+    .select("id,item_no,product_name,category,origin,producer,staff,jf_code,tree_height,tree_shape,pot_size,irisu,quantity,price,pickup_comment,published,reservation_period_enabled,reservation_start_date,reservation_end_date,sales_period_enabled,sales_start_date,sales_end_date,exhibition_images(id,image_url,sort_order)")
     .eq("id", id)
     .eq("shop_id", access.shopId)
     .order("sort_order", { referencedTable: "exhibition_images", ascending: true })
@@ -54,6 +54,13 @@ export default async function Page({ params, searchParams }: {
         <label className="text-sm">ケース入数<input name="irisu" type="number" min="1" step="1" defaultValue={product.irisu ?? 1} className={input} /></label>
         <label className="text-sm">販売可能ケース数<input name="quantity" type="number" min="0" step="1" defaultValue={product.quantity ?? 0} className={input} /></label>
         <label className="text-sm">税抜価格<input name="price" type="number" min="0" step="1" defaultValue={product.price ?? 0} className={input} /></label>
+        <fieldset className="grid gap-5 border-t pt-5 sm:col-span-2 sm:grid-cols-2">
+          <legend className="px-1 text-sm font-semibold">生産情報</legend>
+          <label className="text-sm">産地<input type="text" name="origin" defaultValue={product.origin ?? ""} className={input} /></label>
+          <label className="text-sm">生産者<input type="text" name="producer" defaultValue={product.producer ?? ""} className={input} /></label>
+          <label className="text-sm">担当者<input type="text" name="staff" defaultValue={product.staff ?? ""} className={input} /></label>
+          <label className="text-sm">JFコード<input type="text" name="jfCode" defaultValue={product.jf_code ?? ""} className={input} /></label>
+        </fieldset>
         <ProductImageField existingImageUrl={images[0]?.image_url ?? null} />
         <ProductReservationPeriodField defaultEnabled={product.reservation_period_enabled === true} defaultStartDate={product.reservation_start_date ?? ""} defaultEndDate={product.reservation_end_date ?? ""} />
         <ProductSalesPeriodField defaultEnabled={product.sales_period_enabled === true} defaultStartDate={product.sales_start_date ?? ""} defaultEndDate={product.sales_end_date ?? ""} />

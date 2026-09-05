@@ -33,6 +33,13 @@ export default async function Page({
         <label className="text-sm">ケース入数<input name="irisu" type="number" min="1" step="1" defaultValue="1" className={input} /></label>
         <label className="text-sm">販売可能ケース数<input name="quantity" type="number" min="0" step="1" defaultValue="0" className={input} /></label>
         <label className="text-sm">税抜価格<input name="price" type="number" min="0" step="1" defaultValue="0" className={input} /></label>
+        <fieldset className="grid gap-5 border-t pt-5 sm:col-span-2 sm:grid-cols-2">
+          <legend className="px-1 text-sm font-semibold">生産情報</legend>
+          <label className="text-sm">産地<input type="text" name="origin" className={input} /></label>
+          <label className="text-sm">生産者<input type="text" name="producer" className={input} /></label>
+          <label className="text-sm">担当者<input type="text" name="staff" className={input} /></label>
+          <label className="text-sm">JFコード<input type="text" name="jfCode" className={input} /></label>
+        </fieldset>
         <ProductImageField />
         <ProductReservationPeriodField />
         <ProductSalesPeriodField />

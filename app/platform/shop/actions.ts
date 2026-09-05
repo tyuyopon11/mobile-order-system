@@ -61,6 +61,12 @@ export async function createVendorProduct(formData: FormData) {
   const intent = String(formData.get("intent") ?? "draft");
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
+  const productionInformation = {
+    origin: String(formData.get("origin") ?? "").trim() || null,
+    producer: String(formData.get("producer") ?? "").trim() || null,
+    staff: String(formData.get("staff") ?? "").trim() || null,
+    jf_code: String(formData.get("jfCode") ?? "").trim() || null,
+  };
   const imageFile = formData.get("imageFile");
   const salesPeriod = {
     ...parseProductSalesPeriod(formData),
@@ -82,7 +88,7 @@ export async function createVendorProduct(formData: FormData) {
   const { data: latest } = await supabaseAdmin.from("exhibition_items").select("item_no").eq("shop_id", access.shopId).order("item_no", { ascending: false }).limit(1).maybeSingle();
   const quantity = Math.max(0, Number(formData.get("quantity") ?? 0));
   const published = intent === "publish";
-  const { data: created, error: createError } = await supabaseAdmin.from("exhibition_items").insert({ ...salesPeriod, shop_id: access.shopId, item_no: Number(latest?.item_no ?? 0) + 1, product_name: name || null, category: category || null, tree_height: String(formData.get("treeHeight") ?? "").trim() || null, tree_shape: String(formData.get("treeShape") ?? "").trim() || null, pot_size: String(formData.get("potSize") ?? "").trim() || null, irisu: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, units_per_sales_unit: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, sales_unit: "case", quantity, price: Number.isFinite(price) && price >= 0 ? price : 0, status: published ? (quantity > 0 ? "selling" : "sold") : "preparing", published, published_at: published ? new Date().toISOString() : null, input_completed: published, created_by: access.userId, updated_by: access.userId }).select("id").single();
+  const { data: created, error: createError } = await supabaseAdmin.from("exhibition_items").insert({ ...productionInformation, ...salesPeriod, shop_id: access.shopId, item_no: Number(latest?.item_no ?? 0) + 1, product_name: name || null, category: category || null, tree_height: String(formData.get("treeHeight") ?? "").trim() || null, tree_shape: String(formData.get("treeShape") ?? "").trim() || null, pot_size: String(formData.get("potSize") ?? "").trim() || null, irisu: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, units_per_sales_unit: Number.isInteger(irisu) && irisu > 0 ? irisu : 1, sales_unit: "case", quantity, price: Number.isFinite(price) && price >= 0 ? price : 0, status: published ? (quantity > 0 ? "selling" : "sold") : "preparing", published, published_at: published ? new Date().toISOString() : null, input_completed: published, created_by: access.userId, updated_by: access.userId }).select("id").single();
   if (createError || !created) {
     redirect("/platform/shop/products/new?error=商品を保存できませんでした。もう一度お試しください。");
   }
@@ -115,6 +121,12 @@ export async function saveVendorProductDetails(formData: FormData) {
   const category = String(formData.get("category") ?? "").trim();
   const irisu = Number(formData.get("irisu") ?? 1);
   const price = Number(formData.get("price") ?? 0);
+  const productionInformation = {
+    origin: String(formData.get("origin") ?? "").trim() || null,
+    producer: String(formData.get("producer") ?? "").trim() || null,
+    staff: String(formData.get("staff") ?? "").trim() || null,
+    jf_code: String(formData.get("jfCode") ?? "").trim() || null,
+  };
   const imageFile = formData.get("imageFile");
   const salesPeriod = {
     ...parseProductSalesPeriod(formData),
@@ -138,6 +150,7 @@ export async function saveVendorProductDetails(formData: FormData) {
   const published = intent === "publish";
   const { error: updateError } = await supabaseAdmin.from("exhibition_items").update({
     ...salesPeriod,
+    ...productionInformation,
     product_name: name || null,
     category: category || null,
     tree_height: String(formData.get("treeHeight") ?? "").trim() || null,

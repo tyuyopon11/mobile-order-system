@@ -88,7 +88,7 @@ export default async function ShopPage({
   const { items, totalCount, totalPages } = await getShopItems(
     shop.id,
     currentPage,
-    500
+    15
   );
 
   const brand = getShopBrand(shop.shop_name, shop.slug);

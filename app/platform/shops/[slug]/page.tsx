@@ -13,6 +13,10 @@ type PageProps = {
   }>;
   searchParams: Promise<{
     page?: string;
+    name?: string;
+    category?: string;
+    height?: string;
+    potSize?: string;
   }>;
 };
 
@@ -63,7 +67,7 @@ export default async function ShopPage({
   const query = await searchParams;
 
   const parsedPage = Number(query.page || "1");
-  const currentPage =
+  const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0
       ? Math.floor(parsedPage)
       : 1;
@@ -85,17 +89,30 @@ export default async function ShopPage({
         .maybeSingle()
     : { data: null };
 
-  const { items, totalCount, totalPages } = await getShopItems(
+  const filters = {
+    name: typeof query.name === "string" ? query.name : "",
+    category: typeof query.category === "string" ? query.category : "",
+    height: typeof query.height === "string" ? query.height : "",
+    potSize: typeof query.potSize === "string" ? query.potSize : "",
+  };
+  const { items, totalCount, totalPages, currentPage, filterOptions } = await getShopItems(
     shop.id,
-    currentPage,
-    15
+    requestedPage,
+    15,
+    filters
   );
 
   const brand = getShopBrand(shop.shop_name, shop.slug);
   const safeTotalPages = Math.max(totalPages, 1);
 
-  const createPageUrl = (page: number) =>
-    `/platform/shops/${shop.slug}?page=${page}`;
+  const createPageUrl = (page: number) => {
+    const parameters = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) parameters.set(key, value);
+    }
+    parameters.set("page", String(page));
+    return `/platform/shops/${shop.slug}?${parameters.toString()}`;
+  };
 
   return (
     <main className="min-h-screen bg-[#f4f0e8] text-[#25342c]">
@@ -244,21 +261,12 @@ export default async function ShopPage({
             </div>
           </div>
 
-          {items.length === 0 ? (
-            <div className="rounded-[2rem] border border-stone-200 bg-white px-6 py-20 text-center shadow-sm">
-              <div className="text-4xl">🌿</div>
-
-              <p className="mt-5 text-lg font-medium text-stone-700">
-                現在ご案内できる植物はありません。
-              </p>
-
-              <p className="mt-2 text-sm text-stone-500">
-                新しい植物が登録されるまで、しばらくお待ちください。
-              </p>
-            </div>
-          ) : (
-            <ProductCatalog items={items} />
-          )}
+          <ProductCatalog
+            items={items}
+            filters={filters}
+            filterOptions={filterOptions}
+            totalCount={totalCount}
+          />
 
           {totalPages > 1 && (
             <nav

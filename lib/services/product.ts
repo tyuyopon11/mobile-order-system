@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { calculateAvailableCases } from "@/lib/products/inventory";
 import {
@@ -136,10 +137,47 @@ function mapProduct(
   };
 }
 
+export type ShopItemFilters = {
+  name?: string;
+  category?: string;
+  height?: string;
+  potSize?: string;
+};
+
+type FilterRow = {
+  id: string | number;
+  product_name: string | null;
+  category: string | null;
+  tree_height: string | null;
+  pot_size: string | null;
+};
+
+// Request-local deduplication only: never persist publication or inventory state.
+const getShopFilterRows = cache(async (shopId: string): Promise<FilterRow[]> => {
+  const rows: FilterRow[] = [];
+  // Read every lightweight row, including shops larger than the API row limit.
+  for (;;) {
+    const { data, error, count } = await supabaseAdmin
+      .from("exhibition_items")
+      .select("id,product_name,category,tree_height,pot_size", { count: "exact" })
+      .eq("shop_id", shopId)
+      .eq("published", true)
+      .order("item_no", { ascending: true })
+      .order("id", { ascending: true })
+      .range(rows.length, rows.length + 999);
+    if (error) throw new Error("ショップの絞り込み情報を取得できませんでした。");
+    if (!data?.length) break;
+    rows.push(...data);
+    if (count !== null && rows.length >= count) break;
+  }
+  return rows;
+});
+
 export async function getShopItems(
   shopId: string,
   page: number = 1,
-  pageSize: number = 30
+  pageSize: number = 30,
+  filters: ShopItemFilters = {}
 ) {
   console.log("★★★★ shopId =", shopId);
 
@@ -165,10 +203,28 @@ export async function getShopItems(
       ? pageSize
       : 30;
 
-  const from = (safePage - 1) * safePageSize;
-  const to = from + safePageSize - 1;
+  const filterRows = await getShopFilterRows(shopId);
+  const options = (key: "tree_height" | "pot_size") =>
+    Array.from(new Set(filterRows.map(row => nullableText(row[key])).filter((value): value is string => value !== null)))
+      .sort((a, b) => a.localeCompare(b, "ja"));
+  const filterOptions = { heights: options("tree_height"), potSizes: options("pot_size") };
+  // Match the former browser filter exactly, after the same display normalization.
+  // In particular, search spaces and characters such as %/_ remain literal.
+  const matched = filterRows.filter(row =>
+    (nullableText(row.product_name) ?? "商品名未設定").toLocaleLowerCase("ja").includes((filters.name ?? "").toLocaleLowerCase("ja")) &&
+    (!filters.category || nullableText(row.category) === filters.category) &&
+    (!filters.height || nullableText(row.tree_height) === filters.height) &&
+    (!filters.potSize || nullableText(row.pot_size) === filters.potSize)
+  );
+  const totalCount = matched.length;
+  const totalPages = Math.max(Math.ceil(totalCount / safePageSize), 1);
+  const currentPage = Math.min(safePage, totalPages);
+  const from = (currentPage - 1) * safePageSize;
+  const pageIds = matched.slice(from, from + safePageSize).map(row => row.id);
+  const result = { totalCount, totalPages, currentPage, pageSize: safePageSize, filterOptions };
+  if (!pageIds.length) return { ...result, items: [] as Product[] };
 
-  const { data, error, count } = await supabase
+  const { data, error } = await supabase
     .from("exhibition_items")
     .select(
       `
@@ -208,17 +264,16 @@ export async function getShopItems(
           status,
           cancelled
         )
-      `,
-      {
-        count: "exact",
-      }
+      `
     )
     .eq("shop_id", shopId)
     .eq("published", true)
     .order("item_no", {
       ascending: true,
     })
-    .range(from, to);
+    .in("id", pageIds)
+    .order("id", { ascending: true })
+    .range(0, safePageSize - 1);
 
   if (error) {
     console.error("Shop items fetch error:", error);
@@ -231,18 +286,7 @@ export async function getShopItems(
   const items: Product[] =
     data?.map((item: any) => mapProduct(item)) ?? [];
 
-  const totalCount = count ?? 0;
-
-  return {
-    items,
-    totalCount,
-    totalPages: Math.max(
-      Math.ceil(totalCount / safePageSize),
-      1
-    ),
-    currentPage: safePage,
-    pageSize: safePageSize,
-  };
+  return { ...result, items };
 }
 
 export async function getProduct(

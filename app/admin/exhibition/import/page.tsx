@@ -57,7 +57,7 @@ export default function ExhibitionImportPage() {
   return (
     <main className="min-h-screen bg-stone-50 p-5 sm:p-8">
       <div className="mx-auto max-w-3xl">
-        <Link href="/admin/exhibition" className="text-sm font-semibold text-green-800">
+        <Link href="/platform/shop/products" className="text-sm font-semibold text-green-800">
           ← 商品管理へ戻る
         </Link>
         <h1 className="mt-5 text-3xl font-bold text-stone-900">商品Excel取込</h1>

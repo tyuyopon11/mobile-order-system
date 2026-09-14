@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { notifyNewBuyerApplication } from "@/lib/notifications/new-buyer-application";
 
 export type RegisterFieldErrors = {
   companyName?: string;
@@ -163,6 +164,7 @@ export async function register(
 
   const supabase = await createClient();
 
+  const signUpStartedAt = Date.now();
   const {
     data: signUpData,
     error: signUpError,
@@ -228,6 +230,8 @@ export async function register(
       signOutError.message
     );
   }
+
+  await notifyNewBuyerApplication(signUpData.user, signUpStartedAt);
 
   return {
     success: true,

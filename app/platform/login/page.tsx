@@ -1,3 +1,4 @@
+import { shopManagementMetadata } from "@/lib/shopManagementMetadata";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -22,6 +23,16 @@ function getSafeRedirectPath(
   }
 
   return path;
+}
+
+// The auth proxy redirects anonymous shop links here, including link crawlers.
+export async function generateMetadata({ searchParams }: LoginPageProps) {
+  const query = await searchParams;
+  const nextPath = getSafeRedirectPath(query.next);
+  const pathname = nextPath.split(/[?#]/, 1)[0];
+  return pathname === "/platform/shop" || pathname.startsWith("/platform/shop/")
+    ? shopManagementMetadata
+    : {};
 }
 
 export default async function LoginPage({

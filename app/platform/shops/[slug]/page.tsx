@@ -1,3 +1,4 @@
+import { publicMetadata, MARKETPLACE_DESCRIPTION } from "@/lib/publicMetadata";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -19,6 +20,19 @@ type PageProps = {
     potSize?: string;
   }>;
 };
+
+export async function generateMetadata({ params }: Pick<PageProps, "params">) {
+  const { slug } = await params;
+  // Use the same publication filters as the public page, even for signed-in owners.
+  const shop = await getShop(slug);
+  if (!shop) notFound();
+  return publicMetadata(
+    `${shop.shop_name} | CIRQNEX`,
+    shop.short_description?.trim() || shop.description?.trim() || MARKETPLACE_DESCRIPTION,
+    `/platform/shops/${encodeURIComponent(shop.slug)}`,
+    shop.banner_url || shop.logo_url || undefined,
+  );
+}
 
 type ShopBrand = {
   eyebrow: string;

@@ -1,6 +1,9 @@
+import { publicMetadata, MARKETPLACE_DESCRIPTION } from "@/lib/publicMetadata";
 import HomeClient, { type HomeShop } from "./HomeClient";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isShopPublished } from "@/lib/shops/publication";
+
+export const metadata = publicMetadata("CIRQNEX Marketplace", MARKETPLACE_DESCRIPTION, "/");
 
 export const dynamic = "force-dynamic";
 
